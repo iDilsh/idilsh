@@ -1,68 +1,716 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Idilsh Network | Immersive 3D Agency</title>
-    <!-- Google Fonts + Font Awesome -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        /* RESET & GLOBAL */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>iDilsh Network — Creative Agency · Sri Lanka</title>
+<meta name="description" content="iDilsh Network – Creative design, motion graphics, AI-powered marketing agency in Sri Lanka."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;0,700;1,300;1,600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 
-        body {
-            font-family: 'Inter', 'Poppins', sans-serif;
-            background: #0c0218;
-            color: #f3eaff;
-            overflow-x: hidden;
-            scroll-behavior: smooth;
-        }
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --rose:#ff1f6d;--violet:#7b00e0;--pink:#e0006a;
+  --cream:#ffd6ea;--muted:rgba(255,255,255,.45);
+  --glass:rgba(255,255,255,.07);--gb:rgba(255,255,255,.12);
+}
+html{overflow-x:hidden;}
+body{
+  font-family:'Outfit',sans-serif;
+  background:#0a0015;color:#fff;
+  overflow-x:hidden;cursor:none;
+}
+/* Smooth wrapper */
+#sw{position:fixed;inset:0;overflow:hidden;}
+#sc{will-change:transform;}
 
-        /* Canvas 3D background */
-        #canvas-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            pointer-events: none;
-        }
+/* ── CURSOR ── */
+#cd{position:fixed;width:9px;height:9px;background:var(--rose);border-radius:50%;
+  pointer-events:none;z-index:99999;transform:translate(-50%,-50%);mix-blend-mode:screen;}
+#cr{position:fixed;width:34px;height:34px;border:1.5px solid rgba(255,31,109,.5);
+  border-radius:50%;pointer-events:none;z-index:99998;transform:translate(-50%,-50%);}
+body.hov #cd{width:14px;height:14px;background:#c084fc;}
+body.hov #cr{width:52px;height:52px;border-color:rgba(192,132,252,.4);}
 
-        /* Main content overlay - enhanced glass */
-        .content-wrapper {
-            position: relative;
-            z-index: 10;
-            backdrop-filter: blur(2px);
-        }
+/* ── BG CANVAS ── */
+#bgc{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.grain{position:fixed;inset:-50%;width:200%;height:200%;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.032;pointer-events:none;z-index:1;animation:grn .9s steps(3) infinite;}
+@keyframes grn{0%{transform:translate(0,0);}25%{transform:translate(-4%,-7%);}
+  50%{transform:translate(5%,3%);}75%{transform:translate(-2%,5%);}100%{transform:translate(3%,-2%);}}
 
-        .container {
-            max-width: 1300px;
-            margin: 0 auto;
-            padding: 0 30px;
-        }
+/* ── LAYOUT ── */
+.page{position:relative;z-index:2;}
+.wrap{max-width:1200px;margin:0 auto;padding:0 44px;}
 
-        /* Glassmorphic cards with depth */
-        .glass-card, nav, .hero-glass, .footer-glass, .contact-card, .stat-card, .service-card, .project-card, .testimonial-card {
-            background: rgba(20, 5, 40, 0.45);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border-radius: 32px;
-            border: 1px solid rgba(255, 120, 200, 0.4);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 100, 200, 0.1) inset;
-            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-        }
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;
+  display:flex;align-items:center;justify-content:center;
+  padding:22px 32px;gap:20px;pointer-events:none;}
+.nlogo{pointer-events:all;}
+.nlogo img{height:46px;filter:drop-shadow(0 0 18px rgba(255,31,109,.4));}
+.npill{pointer-events:all;display:flex;align-items:center;gap:4px;padding:8px 10px;
+  border-radius:60px;background:rgba(255,255,255,.06);
+  backdrop-filter:blur(30px) saturate(200%);-webkit-backdrop-filter:blur(30px) saturate(200%);
+  border:1px solid rgba(255,255,255,.15);
+  box-shadow:0 8px 32px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.1);}
+.npill a{padding:9px 22px;border-radius:50px;text-decoration:none;
+  font-weight:600;font-size:.84rem;color:rgba(255,255,255,.65);letter-spacing:.02em;transition:all .3s;}
+.npill a:hover,.npill a.active{
+  background:linear-gradient(120deg,rgba(255,31,109,.22),rgba(123,0,224,.22));
+  color:#fff;box-shadow:0 0 0 1px rgba(255,31,109,.28);}
 
-        nav {
-            background: rgba(10, 0, 25, 0.6);
-            backdrop-filter: blur(20px);
-            border-radius: 0 0 36px 36px;
-            border-top: none;
+/* ── HERO ── */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;padding:120px 44px 90px;
+  position:relative;perspective:1400px;}
+.hero-inner{position:relative;transform-style:preserve-3d;will-change:transform;}
+.hglass{position:absolute;inset:-70px -90px;
+  background:rgba(255,255,255,.03);
+  backdrop-filter:blur(50px);-webkit-backdrop-filter:blur(50px);
+  border-radius:64px;border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 0 0 1px rgba(255,31,109,.06),0 50px 140px rgba(0,0,0,.6),
+    inset 0 1px 0 rgba(255,255,255,.1),inset 0 -1px 0 rgba(255,31,109,.08);
+  transform:translateZ(-40px);pointer-events:none;}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;margin-bottom:30px;
+  padding:7px 20px;border-radius:40px;
+  background:rgba(255,31,109,.1);border:1px solid rgba(255,31,109,.28);
+  font-size:.72rem;font-weight:700;letter-spacing:.15em;color:#ff7ab0;text-transform:uppercase;
+  animation:ebGlow 3s ease-in-out infinite alternate;}
+@keyframes ebGlow{from{box-shadow:0 0 0 rgba(255,31,109,0);}to{box-shadow:0 0 28px rgba(255,31,109,.22);}}
+.hero h1{font-family:'Cormorant Garamond',serif;
+  font-size:clamp(3.8rem,9.5vw,7.8rem);font-weight:700;line-height:.92;
+  letter-spacing:-.025em;margin-bottom:26px;}
+.hero h1 .line{display:block;overflow:hidden;}
+.hero h1 .word{display:inline-block;
+  background:linear-gradient(140deg,#fff 0%,#ffd6ea 38%,#ff1f6d 68%,#c084fc 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:wReveal .95s cubic-bezier(.16,1,.3,1) both;}
+.hero h1 .line:nth-child(1) .word{animation-delay:.08s;}
+.hero h1 .line:nth-child(2) .word{animation-delay:.22s;}
+.hero h1 .line:nth-child(3) .word{animation-delay:.36s;}
+@keyframes wReveal{from{transform:translateY(108%) rotateX(-42deg);opacity:0;}
+  to{transform:translateY(0) rotateX(0);opacity:1;}}
+.hitalic{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;
+  font-size:clamp(1.1rem,2.5vw,1.5rem);color:rgba(255,214,234,.65);
+  margin-bottom:28px;letter-spacing:.02em;animation:fup .8s .6s cubic-bezier(.16,1,.3,1) both;}
+.hsub{max-width:580px;margin:0 auto 44px;font-size:1rem;line-height:1.82;
+  color:rgba(255,255,255,.5);animation:fup .8s .75s cubic-bezier(.16,1,.3,1) both;}
+@keyframes fup{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+.hcta{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;
+  animation:fup .8s .9s cubic-bezier(.16,1,.3,1) both;}
+
+/* buttons */
+.btn-glow{position:relative;padding:16px 44px;border-radius:14px;
+  background:linear-gradient(120deg,var(--violet),var(--rose));
+  color:#fff;font-weight:700;font-size:.95rem;text-decoration:none;letter-spacing:.03em;
+  overflow:hidden;transition:transform .3s,box-shadow .3s;
+  box-shadow:0 0 0 1px rgba(255,31,109,.3),0 8px 32px rgba(255,31,109,.38);}
+.btn-glow::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(120deg,rgba(255,255,255,.22),transparent);opacity:0;transition:opacity .3s;}
+.btn-glow:hover{transform:translateY(-4px) scale(1.04);
+  box-shadow:0 0 0 1px rgba(255,31,109,.55),0 18px 52px rgba(255,31,109,.52);}
+.btn-glow:hover::before{opacity:1;}
+.btn-out{padding:15px 42px;border-radius:14px;border:1px solid rgba(255,255,255,.18);
+  color:rgba(255,255,255,.78);font-weight:600;font-size:.95rem;text-decoration:none;
+  background:rgba(255,255,255,.05);backdrop-filter:blur(10px);transition:all .3s;}
+.btn-out:hover{border-color:rgba(255,31,109,.5);background:rgba(255,31,109,.1);
+  color:#fff;transform:translateY(-4px);}
+
+/* stats bar */
+.hstats{display:flex;gap:0;margin-top:68px;
+  background:rgba(255,255,255,.05);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  border:1px solid rgba(255,255,255,.1);border-radius:20px;overflow:hidden;
+  animation:fup .8s 1.1s cubic-bezier(.16,1,.3,1) both;}
+.stat{flex:1;padding:24px 18px;text-align:center;
+  border-right:1px solid rgba(255,255,255,.07);transition:background .3s;}
+.stat:last-child{border-right:none;}
+.stat:hover{background:rgba(255,31,109,.07);}
+.sn{font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:700;line-height:1;
+  background:linear-gradient(135deg,#fff,#ff7ab0);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.sl{font-size:.7rem;font-weight:600;color:rgba(255,255,255,.38);
+  letter-spacing:.1em;text-transform:uppercase;margin-top:6px;}
+
+/* scroll hint */
+.shint{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  animation:fup .8s 1.4s both;}
+.shint span{font-size:.68rem;letter-spacing:.18em;color:rgba(255,255,255,.28);text-transform:uppercase;}
+.sline{width:1px;height:46px;background:linear-gradient(to bottom,rgba(255,31,109,.7),transparent);
+  animation:spulse 2s ease-in-out infinite;}
+@keyframes spulse{0%{transform:scaleY(0);transform-origin:top;}50%{transform:scaleY(1);transform-origin:top;}
+  51%{transform:scaleY(1);transform-origin:bottom;}100%{transform:scaleY(0);transform-origin:bottom;}}
+
+/* ── SECTION ── */
+.sec{padding:110px 0;perspective:1400px;}
+.sh{text-align:center;margin-bottom:72px;}
+.sh .tag{display:inline-flex;align-items:center;gap:6px;margin-bottom:16px;padding:5px 16px;
+  border-radius:30px;background:rgba(255,31,109,.09);border:1px solid rgba(255,31,109,.22);
+  font-size:.7rem;font-weight:700;letter-spacing:.15em;color:#ff7ab0;text-transform:uppercase;}
+.sh h2{font-family:'Cormorant Garamond',serif;
+  font-size:clamp(2rem,4.5vw,3.6rem);font-weight:700;
+  background:linear-gradient(140deg,#fff 0%,rgba(255,214,234,.8) 55%,#c084fc 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1.1;margin-bottom:14px;}
+.sh p{color:var(--muted);font-size:1.02rem;max-width:500px;margin:0 auto;line-height:1.78;}
+
+/* ── ABOUT ── */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;
+  padding:72px 68px;border-radius:44px;
+  background:var(--glass);
+  backdrop-filter:blur(44px) saturate(180%);-webkit-backdrop-filter:blur(44px) saturate(180%);
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 40px 110px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.1),
+    inset 0 -1px 0 rgba(255,31,109,.06);}
+.atag{display:inline-block;margin-bottom:16px;padding:5px 16px;border-radius:30px;
+  background:rgba(255,31,109,.1);border:1px solid rgba(255,31,109,.2);
+  font-size:.7rem;font-weight:700;letter-spacing:.15em;color:#ff7ab0;text-transform:uppercase;}
+.about-text h2{font-family:'Cormorant Garamond',serif;
+  font-size:clamp(1.9rem,3vw,2.9rem);font-weight:700;color:#fff;
+  line-height:1.15;margin-bottom:22px;}
+.about-text p{color:var(--muted);line-height:1.87;margin-bottom:18px;font-size:.98rem;}
+.ifrm{position:relative;border-radius:28px;overflow:hidden;aspect-ratio:1/1;
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 0 0 1px rgba(255,31,109,.1),0 32px 88px rgba(0,0,0,.65);}
+.ifrm::before{content:'';position:absolute;inset:0;z-index:1;
+  background:linear-gradient(135deg,rgba(255,31,109,.14) 0%,rgba(123,0,224,.08) 100%);}
+.ifrm::after{content:'';position:absolute;top:0;left:0;right:0;height:46%;z-index:2;
+  background:linear-gradient(to bottom,rgba(255,255,255,.07),transparent);}
+.ifrm img{width:100%;height:100%;object-fit:cover;display:block;}
+.fbadge{position:absolute;bottom:-18px;left:-18px;z-index:3;
+  padding:16px 20px;border-radius:18px;
+  background:rgba(255,255,255,.07);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 20px 44px rgba(0,0,0,.45);animation:fbFloat 4s ease-in-out infinite;}
+@keyframes fbFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
+.fbadge .fn{font-family:'Cormorant Garamond',serif;font-size:2.1rem;font-weight:700;color:#fff;line-height:1;}
+.fbadge .fl{font-size:.68rem;color:rgba(255,255,255,.45);letter-spacing:.08em;margin-top:4px;}
+
+/* ── SERVICES HORIZONTAL ── */
+.svc-outer{overflow:hidden;padding:4px 0 24px;}
+.svc-track{display:flex;gap:24px;padding:20px 44px 40px;width:max-content;
+  transition:transform .65s cubic-bezier(.25,.46,.45,.94);cursor:grab;}
+.svc-track:active{cursor:grabbing;}
+.scard{width:318px;flex-shrink:0;padding:42px 32px;border-radius:28px;
+  background:var(--glass);
+  backdrop-filter:blur(30px) saturate(160%);-webkit-backdrop-filter:blur(30px) saturate(160%);
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow:0 20px 60px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08);
+  transition:transform .42s cubic-bezier(.34,1.56,.64,1),box-shadow .42s,border-color .3s;
+  position:relative;overflow:hidden;}
+.scard::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,31,109,.07),rgba(123,0,224,.05));
+  opacity:0;transition:opacity .4s;}
+.scard::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--rose),var(--violet));
+  transform:scaleX(0);transform-origin:left;transition:transform .4s ease;}
+.scard:hover{transform:translateY(-14px) rotateX(4deg) scale(1.025);
+  box-shadow:0 44px 88px rgba(0,0,0,.65),0 0 0 1px rgba(255,31,109,.22);
+  border-color:rgba(255,31,109,.28);}
+.scard:hover::before{opacity:1;}
+.scard:hover::after{transform:scaleX(1);}
+.sicon{width:56px;height:56px;border-radius:17px;margin-bottom:24px;
+  background:linear-gradient(135deg,rgba(255,31,109,.15),rgba(123,0,224,.15));
+  border:1px solid rgba(255,31,109,.2);
+  display:flex;align-items:center;justify-content:center;font-size:1.65rem;
+  box-shadow:0 8px 24px rgba(255,31,109,.14);}
+.scard h3{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;
+  color:#fff;margin-bottom:12px;}
+.scard p{color:var(--muted);font-size:.9rem;line-height:1.7;}
+.tnav{display:flex;gap:12px;justify-content:center;margin-top:28px;}
+.tbtn{width:44px;height:44px;border-radius:50%;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  color:#fff;font-size:1.1rem;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .3s;backdrop-filter:blur(10px);}
+.tbtn:hover{background:rgba(255,31,109,.2);border-color:rgba(255,31,109,.38);}
+
+/* ── PRICING ── */
+.pgrid{display:grid;grid-template-columns:repeat(4,1fr);
+  gap:20px;align-items:start;perspective:1200px;}
+.pcard{border-radius:28px;padding:40px 24px;
+  background:var(--glass);
+  backdrop-filter:blur(30px) saturate(160%);-webkit-backdrop-filter:blur(30px) saturate(160%);
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow:0 20px 60px rgba(0,0,0,.45);
+  display:flex;flex-direction:column;position:relative;overflow:visible;
+  transition:transform .42s cubic-bezier(.34,1.56,.64,1),box-shadow .42s;}
+.pcard:hover{transform:translateY(-18px) rotateX(3deg);
+  box-shadow:0 44px 88px rgba(0,0,0,.65),0 0 44px rgba(255,31,109,.1);}
+.pcard.feat{background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,31,109,.38);
+  box-shadow:0 20px 60px rgba(0,0,0,.45),0 0 60px rgba(255,31,109,.14),
+    inset 0 1px 0 rgba(255,255,255,.12);}
+.pcard.feat:hover{box-shadow:0 44px 88px rgba(0,0,0,.65),0 0 90px rgba(255,31,109,.22);}
+.pbadge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+  padding:5px 18px;border-radius:30px;
+  background:linear-gradient(90deg,var(--rose),var(--violet));
+  color:#fff;font-size:.68rem;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;white-space:nowrap;
+  box-shadow:0 4px 20px rgba(255,31,109,.5);}
+.plbl{font-size:.68rem;font-weight:700;letter-spacing:.14em;color:#ff7ab0;
+  text-transform:uppercase;margin-bottom:8px;}
+.pname{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;
+  color:#fff;margin-bottom:16px;}
+.pprice{font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:700;
+  color:#fff;margin-bottom:4px;line-height:1;}
+.pprice small{font-size:.83rem;font-weight:400;color:rgba(255,255,255,.38);
+  font-family:'Outfit',sans-serif;}
+.pdiv{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
+  margin:20px 0;}
+.pfeats{list-style:none;flex-grow:1;margin-bottom:28px;}
+.pfeats li{font-size:.83rem;color:var(--muted);padding:8px 0;
+  display:flex;gap:10px;line-height:1.4;font-weight:500;
+  border-bottom:1px solid rgba(255,255,255,.05);}
+.pfeats li::before{content:'✦';color:var(--rose);font-size:.62rem;flex-shrink:0;margin-top:3px;}
+.pcta{display:block;text-align:center;padding:13px 20px;border-radius:12px;
+  font-weight:700;font-size:.88rem;text-decoration:none;letter-spacing:.03em;transition:all .3s;}
+.pcta.pri{background:linear-gradient(120deg,var(--violet),var(--rose));color:#fff;
+  box-shadow:0 6px 24px rgba(255,31,109,.42);}
+.pcta.pri:hover{transform:translateY(-3px);box-shadow:0 14px 38px rgba(255,31,109,.58);}
+.pcta.gho{border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.65);
+  background:rgba(255,255,255,.04);}
+.pcta.gho:hover{border-color:rgba(255,31,109,.42);background:rgba(255,31,109,.1);
+  color:#fff;transform:translateY(-3px);}
+
+/* ── CONTACT ── */
+.cgrid{display:grid;grid-template-columns:1fr 1.22fr;gap:54px;
+  padding:72px 68px;border-radius:44px;
+  background:var(--glass);
+  backdrop-filter:blur(44px) saturate(180%);-webkit-backdrop-filter:blur(44px) saturate(180%);
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 40px 110px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08);
+  position:relative;overflow:hidden;}
+.cgrid::before{content:'';position:absolute;top:-80px;right:-80px;
+  width:320px;height:320px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,31,109,.11),transparent 70%);
+  pointer-events:none;}
+.cinfo h2{font-family:'Cormorant Garamond',serif;
+  font-size:clamp(1.9rem,3vw,2.7rem);font-weight:700;color:#fff;
+  line-height:1.18;margin-bottom:14px;}
+.cinfo p{color:var(--muted);font-size:1rem;line-height:1.82;margin-bottom:36px;}
+.srow{display:flex;flex-wrap:wrap;gap:12px;}
+.soc{padding:11px 22px;border-radius:12px;font-weight:700;font-size:.83rem;
+  text-decoration:none;transition:all .38s cubic-bezier(.34,1.56,.64,1);
+  display:flex;align-items:center;gap:8px;border:1px solid transparent;}
+.swa{background:rgba(7,193,96,.13);color:#07c160;border-color:rgba(7,193,96,.22);}
+.swa:hover{background:#07c160;color:#fff;transform:translateY(-5px) scale(1.05);
+  box-shadow:0 12px 30px rgba(7,193,96,.35);}
+.sfb{background:rgba(24,119,242,.13);color:#5b9cf7;border-color:rgba(24,119,242,.22);}
+.sfb:hover{background:#1877f2;color:#fff;transform:translateY(-5px) scale(1.05);
+  box-shadow:0 12px 30px rgba(24,119,242,.35);}
+.syt{background:rgba(255,0,0,.13);color:#ff4d4d;border-color:rgba(255,0,0,.22);}
+.syt:hover{background:#ff0000;color:#fff;transform:translateY(-5px) scale(1.05);
+  box-shadow:0 12px 30px rgba(255,0,0,.35);}
+.stt{background:rgba(255,255,255,.06);color:rgba(255,255,255,.68);
+  border-color:rgba(255,255,255,.12);}
+.stt:hover{background:#fff;color:#000;transform:translateY(-5px) scale(1.05);
+  box-shadow:0 12px 30px rgba(255,255,255,.18);}
+.cform{display:flex;flex-direction:column;gap:14px;}
+.cf{padding:15px 20px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);
+  font-family:'Outfit',sans-serif;font-size:.95rem;color:#fff;width:100%;
+  transition:border-color .3s,background .3s,box-shadow .3s;}
+.cf::placeholder{color:rgba(255,255,255,.24);}
+.cf:focus{outline:none;border-color:rgba(255,31,109,.5);background:rgba(255,255,255,.1);
+  box-shadow:0 0 0 4px rgba(255,31,109,.1);}
+textarea.cf{resize:vertical;}
+.sover{position:absolute;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+  background:rgba(10,0,21,.88);backdrop-filter:blur(18px);z-index:10;
+  border-radius:42px;animation:ovIn .4s ease both;}
+@keyframes ovIn{from{opacity:0;transform:scale(.95);}to{opacity:1;transform:scale(1);}}
+.sover h3{font-family:'Cormorant Garamond',serif;font-size:2.5rem;color:#ff7ab0;margin-bottom:12px;}
+.sover p{color:var(--muted);font-size:1rem;}
+
+/* ── FOOTER ── */
+footer{padding:50px 44px;text-align:center;
+  border-top:1px solid rgba(255,255,255,.06);
+  color:rgba(255,255,255,.28);font-size:.8rem;font-weight:500;}
+footer a{color:rgba(255,31,109,.7);text-decoration:none;font-weight:700;}
+footer a:hover{color:var(--rose);}
+
+/* ── REVEAL ── */
+[data-r]{opacity:0;transition:opacity .95s cubic-bezier(.16,1,.3,1),transform .95s cubic-bezier(.16,1,.3,1);}
+[data-r="u"]{transform:translateY(65px) rotateX(14deg);}
+[data-r="l"]{transform:translateX(-65px) rotateY(-16deg);}
+[data-r="r"]{transform:translateX(65px) rotateY(16deg);}
+[data-r="s"]{transform:scale(.86) translateZ(-70px);}
+[data-r].on{opacity:1;transform:none;}
+[data-stag]>*{opacity:0;transform:translateY(44px) rotateX(8deg);
+  transition:opacity .72s cubic-bezier(.16,1,.3,1),transform .72s cubic-bezier(.16,1,.3,1);}
+[data-stag].on>*:nth-child(1){opacity:1;transform:none;transition-delay:.04s;}
+[data-stag].on>*:nth-child(2){opacity:1;transform:none;transition-delay:.12s;}
+[data-stag].on>*:nth-child(3){opacity:1;transform:none;transition-delay:.20s;}
+[data-stag].on>*:nth-child(4){opacity:1;transform:none;transition-delay:.28s;}
+[data-stag].on>*:nth-child(5){opacity:1;transform:none;transition-delay:.36s;}
+[data-stag].on>*:nth-child(6){opacity:1;transform:none;transition-delay:.44s;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:960px){
+  .about-grid,.cgrid{grid-template-columns:1fr;padding:40px 28px;gap:38px;}
+  .pgrid{grid-template-columns:repeat(2,1fr);}
+  .ifrm{max-width:360px;margin:0 auto;}
+  .hero{padding:100px 24px 80px;}
+  .hglass{display:none;}
+}
+@media(max-width:600px){
+  .pgrid{grid-template-columns:1fr;}
+  .hero h1{font-size:3.2rem;}
+  .npill a{padding:7px 13px;font-size:.78rem;}
+  #cd,#cr{display:none;}body{cursor:auto;}
+  .hstats{flex-direction:column;}
+  .stat{border-right:none;border-bottom:1px solid rgba(255,255,255,.07);}
+  .wrap{padding:0 22px;}
+}
+</style>
+</head>
+<body>
+
+<div id="cd"></div><div id="cr"></div>
+<canvas id="bgc"></canvas>
+<div class="grain"></div>
+
+<div id="sw"><div id="sc"><div class="page">
+
+<!-- NAV -->
+<nav>
+  <div class="nlogo"><a href="#"><img src="https://blogger.googleusercontent.com/img/a/AVvXsEg8ftZ1RgijjQWlHMla_Ley2aB3hOAI8XpreuTA4ShDXcbdTiEALtD9THri5ezCaKGVX4G4pi9MqiHazBy3L_mQU2Ds6_Clq-0YqbTj4FWaJL33xBZKROJT_JgTN0szgZcz5IfmH7XjBeU7_BsyCdWSaCP91Ey44iEhKbcWkUBUbrsSMstZh2KKzZu4gCeu=s1500" alt="iDilsh Network"/></a></div>
+  <div class="npill">
+    <a href="https://www.idilshnet.top" target="_blank">Courses</a>
+    <a href="#about">About</a><a href="#services">Services</a>
+    <a href="#pricing">Pricing</a><a href="#contact">Contact</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-inner" id="heroInner">
+    <div class="hglass"></div>
+    <div class="eyebrow"><svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="#ff1f6d"/></svg>Creative Agency · Sri Lanka</div>
+    <h1>
+      <span class="line"><span class="word">Design.</span></span>
+      <span class="line"><span class="word">Ads.</span></span>
+      <span class="line"><span class="word">Marketing.</span></span>
+    </h1>
+    <p class="hitalic">නිර්මාණ දල්වමින් — Igniting Designs, Illuminating Dreams ✨</p>
+    <p class="hsub">Graphic design, motion graphics, AI-powered ads &amp; social media management — all beautifully crafted under one roof.</p>
+    <div class="hcta">
+      <a class="btn-glow" href="#pricing">Explore Plans</a>
+      <a class="btn-out" href="#contact">Let's Talk</a>
+    </div>
+    <div class="hstats">
+      <div class="stat"><div class="sn">5+</div><div class="sl">Years</div></div>
+      <div class="stat"><div class="sn">18+</div><div class="sl">Projects</div></div>
+      <div class="stat"><div class="sn">100%</div><div class="sl">Satisfaction</div></div>
+      <div class="stat"><div class="sn">24/7</div><div class="sl">Support</div></div>
+    </div>
+  </div>
+  <div class="shint"><span>Scroll</span><div class="sline"></div></div>
+</section>
+
+<!-- ABOUT -->
+<section class="sec" id="about">
+  <div class="wrap">
+    <div class="about-grid" data-r="u" data-tilt>
+      <div class="about-text">
+        <span class="atag">✦ Who We Are</span>
+        <h2>We're iDilsh Network</h2>
+        <p>Based in Sri Lanka as an emerging start-up, we carry over 5+ years of experience across 18+ global projects — transforming raw ideas into magical digital experiences.</p>
+        <p>Our mission: deliver premium, unique designs at the most accessible price, helping small brands shine and win in the digital world.</p>
+        <br/>
+        <a class="btn-out" href="https://web.facebook.com/idilshnetwork" target="_blank">View Recent Projects →</a>
+      </div>
+      <div class="ifrm" data-r="r">
+        <img src="https://i.pinimg.com/736x/a8/46/72/a84672d2ac6ec070b9cbe0994719e25b.jpg" alt="iDilsh Network"/>
+        <div class="fbadge"><div class="fn">18+</div><div class="fl">Global Projects</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="sec" id="services">
+  <div class="wrap">
+    <div class="sh" data-r="u">
+      <span class="tag">✦ What We Do</span>
+      <h2>Our Services</h2>
+      <p>From a single graphic to full-scale campaigns — every pixel crafted with intention.</p>
+    </div>
+  </div>
+  <div class="svc-outer">
+    <div class="svc-track" id="svcTrack">
+      <div class="scard"><div class="sicon">🎨</div><h3>Graphic Design</h3><p>Logos, brand identity, business cards, flyers, posters, and all print & digital graphic solutions.</p></div>
+      <div class="scard"><div class="sicon">🎬</div><h3>Video & Animation</h3><p>Video edits, logo animations, video ads, intros, outros, slideshows, and all motion graphics.</p></div>
+      <div class="scard"><div class="sicon">✨</div><h3>AI-Powered Design</h3><p>High-quality AI graphics, video ads and artworks with full commercial rights for your brand.</p></div>
+      <div class="scard"><div class="sicon">🌏</div><h3>Web Design</h3><p>Portfolios, landing pages, e-commerce — designed and developed at the lowest cost in Sri Lanka.</p></div>
+      <div class="scard"><div class="sicon">📈</div><h3>Social Media Management</h3><p>Strategically manage FB, YouTube, TikTok, Pinterest with strategic content creation.</p></div>
+      <div class="scard"><div class="sicon">🤝</div><h3>Free Guides</h3><p>Message us for completely FREE guides to improve your designs, skills, and brand profiles.</p></div>
+    </div>
+  </div>
+  <div class="tnav">
+    <button class="tbtn" id="tL">←</button>
+    <button class="tbtn" id="tR">→</button>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="sec" id="pricing">
+  <div class="wrap">
+    <div class="sh" data-r="u">
+      <span class="tag">✦ Plans & Pricing</span>
+      <h2>Transparent Pricing</h2>
+      <p>Choose the plan that fits your brand's growth — no hidden fees, ever.</p>
+    </div>
+    <div class="pgrid" data-stag>
+
+      <div class="pcard">
+        <div class="pbadge">Single Project</div>
+        <div class="plbl">Flexible</div><div class="pname">One Creation</div>
+        <div class="pprice">LKR 500+<br/><small>per project</small></div>
+        <div class="pdiv"></div>
+        <ul class="pfeats">
+          <li>Resume, Cards, Cover Letters</li><li>Logo to All Business Designs</li>
+          <li>Social Media Posts & Assets</li><li>Flyers, Posters & All Prints</li>
+          <li>Video Edits, Ads & More</li><li>Animations & Motion Graphics</li>
+          <li>Simple to Pro Web Design</li><li>Price depends on project</li>
+        </ul>
+        <a class="pcta gho" href="https://wa.me/94773226376" target="_blank">Contact Us</a>
+      </div>
+
+      <div class="pcard feat">
+        <div class="pbadge">Most Popular</div>
+        <div class="plbl">Monthly Pack</div><div class="pname">Budget Plan</div>
+        <div class="pprice">LKR 5,000<br/><small>/ month</small></div>
+        <div class="pdiv"></div>
+        <ul class="pfeats">
+          <li>5 Posts or Videos</li><li>Brand Profile Setup</li>
+          <li>High Quality Unique Designs</li><li>SEO Optimized Captions</li>
+          <li>Strategic Hashtag Setup</li><li>Targeted Keyword Research</li>
+          <li>Analytics and Reports</li><li>Secret Growth Principles</li>
+          <li>24/7 Customer Support</li>
+        </ul>
+        <a class="pcta pri" href="https://wa.me/94773226376" target="_blank">Get Started</a>
+      </div>
+
+      <div class="pcard">
+        <div class="pbadge">Monthly Pack</div>
+        <div class="plbl">Scale</div><div class="pname">Business</div>
+        <div class="pprice">LKR 12,000<br/><small>/ month</small></div>
+        <div class="pdiv"></div>
+        <ul class="pfeats">
+          <li>15 Posts or Videos</li><li>Advanced Brand Profile Setup</li>
+          <li>High Quality Unique Designs</li><li>Strategic Hashtag Setup</li>
+          <li>SEO Optimized Captions</li><li>Targeted Keyword Research</li>
+          <li>Deep Analytics & Reports</li><li>Paid Ads & Promotion</li>
+          <li>24/7 Customer Support</li>
+        </ul>
+        <a class="pcta gho" href="https://wa.me/94773226376" target="_blank">Start Now</a>
+      </div>
+
+      <div class="pcard">
+        <div class="pbadge">Fully Custom</div>
+        <div class="plbl">Enterprise</div><div class="pname">Enterprise</div>
+        <div class="pprice">Custom<br/><small>quote</small></div>
+        <div class="pdiv"></div>
+        <ul class="pfeats">
+          <li>Up to 30 Posts or Videos</li><li>Pro Business Profile Setup</li>
+          <li>Premium Unique Designs</li><li>Advanced Strategic Hashtags</li>
+          <li>SEO Optimized Captions</li><li>Targeted Keyword Research</li>
+          <li>Deep Analytics & Reports</li><li>Paid Ads & Promotion</li>
+          <li>24/7 Priority Support</li>
+        </ul>
+        <a class="pcta gho" href="https://wa.me/94773226376" target="_blank">Let's Talk</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="sec" id="contact">
+  <div class="wrap">
+    <div class="sh" data-r="u">
+      <span class="tag">✦ Get in Touch</span>
+      <h2>24/7 Contact Methods</h2>
+      <p>Ask anything, in any language. ඕනෑම භාෂාවකින් සම්බන්ධ වන්න. ☺️</p>
+    </div>
+    <div class="cgrid" data-r="u">
+      <div id="sover" class="sover">
+        <h3>✨ Sent Successfully!</h3>
+        <p>We'll reply within 24 hours.</p><br/>
+        <button class="btn-out" onclick="document.getElementById('sover').style.display='none'"
+          style="cursor:pointer;font-family:'Outfit',sans-serif;border-radius:10px;padding:12px 28px;font-size:.88rem;font-weight:700;">
+          Send Another ↩
+        </button>
+      </div>
+      <div class="cinfo">
+        <span class="atag">✦ Always Here</span>
+        <h2>Feel FREE to Ask Anything!</h2>
+        <p>Reach out through any platform — we respond to every message with care and promptness.</p>
+        <div class="srow">
+          <a class="soc swa" href="https://wa.me/94773226376" target="_blank">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+            WhatsApp</a>
+          <a class="soc sfb" href="https://web.facebook.com/idilshnetwork/" target="_blank">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Facebook</a>
+          <a class="soc syt" href="https://www.youtube.com/@IdilshNetwork" target="_blank">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            YouTube</a>
+          <a class="soc stt" href="https://www.tiktok.com/@idilshnet" target="_blank">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.75a8.21 8.21 0 004.79 1.52V6.82a4.85 4.85 0 01-1.02-.13z"/></svg>
+            TikTok</a>
+        </div>
+      </div>
+      <form class="cform" id="mf" action="https://api.web3forms.com/submit" method="POST">
+        <input type="hidden" name="access_key" value="f9241ce6-c690-4811-9d61-0b031ac2a146"/>
+        <input type="hidden" name="subject" value="New iDilsh Network Inquiry"/>
+        <input class="cf" type="text" name="name" placeholder="Your Name" required/>
+        <input class="cf" type="email" name="email" placeholder="Your Email" required/>
+        <textarea class="cf" name="message" rows="5" placeholder="Tell us about your project..." required></textarea>
+        <button class="btn-glow" type="submit" id="sb"
+          style="border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.95rem;
+          font-weight:700;letter-spacing:.03em;text-align:center;">
+          Send Message to hi@iDilsh.Top ✦
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+
+</div></div></div>
+
+<footer><p>© 2026 Made with ❤️ <a href="https://www.idilshnet.top" target="_blank">iDilsh Network</a> — Sri Lanka</p></footer>
+
+<script>
+/* ── SMOOTH SCROLL ── */
+const sc=document.getElementById('sc');
+let cy=0,ty=0;
+function loop(){
+  ty=window.scrollY;
+  cy+=(ty-cy)*.09;
+  if(Math.abs(ty-cy)<.5)cy=ty;
+  sc.style.transform=`translate3d(0,${-cy}px,0)`;
+  heroParallax(cy);
+  requestAnimationFrame(loop);
+}
+function setH(){document.body.style.height=sc.scrollHeight+'px';}
+window.addEventListener('resize',setH);setH();loop();
+
+/* ── HERO PARALLAX ── */
+const heroInner=document.getElementById('heroInner');
+function heroParallax(sy){
+  const vh=window.innerHeight;
+  const p=Math.min(sy/vh,1);
+  heroInner.style.transform=`translateY(${p*-50}px) rotateX(${p*4}deg) scale(${1-p*.05})`;
+  heroInner.style.opacity=Math.max(0,1-p*.75);
+}
+
+/* ── CANVAS ── */
+const cv=document.getElementById('bgc'),c=cv.getContext('2d');
+let W,H,blobs=[],scrollOff=0;
+function initC(){
+  W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;
+  blobs=[
+    {x:.16,y:.14,r:.42,c0:'#ff1f6d',c1:'#9900ff',t:0,sp:.009},
+    {x:.8,y:.78,r:.36,c0:'#8800ee',c1:'#ff3080',t:Math.PI,sp:.007},
+    {x:.58,y:.28,r:.3,c0:'#cc44ff',c1:'#ff1f6d',t:2.2,sp:.008},
+    {x:.22,y:.82,r:.22,c0:'#dd0066',c1:'#6600cc',t:4.4,sp:.006},
+  ];
+}
+initC();window.addEventListener('resize',initC);
+
+function ha(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;}
+
+function drawC(){
+  scrollOff=cy;
+  ctx2d_clear:c.clearRect(0,0,W,H);
+  c.fillStyle='#0a0015';c.fillRect(0,0,W,H);
+  blobs.forEach(b=>{
+    b.t+=b.sp;
+    const ox=Math.sin(b.t*1.1)*.07,oy=Math.cos(b.t*.85)*.06;
+    const bx=(b.x+ox)*W,by=(b.y+oy)*H-scrollOff*.04;
+    const br=b.r*Math.max(W,H);
+    const g=c.createRadialGradient(bx,by,0,bx,by,br);
+    g.addColorStop(0,ha(b.c0,.52));g.addColorStop(1,ha(b.c1,0));
+    c.beginPath();c.arc(bx,by,br,0,Math.PI*2);c.fillStyle=g;c.fill();
+  });
+  const v=c.createRadialGradient(W/2,H/2,H*.08,W/2,H/2,H*.95);
+  v.addColorStop(0,'rgba(10,0,21,0)');v.addColorStop(1,'rgba(10,0,21,.72)');
+  c.fillStyle=v;c.fillRect(0,0,W,H);
+  requestAnimationFrame(drawC);
+}
+drawC();
+
+/* ── CURSOR ── */
+const cd=document.getElementById('cd'),cr=document.getElementById('cr');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cd.style.left=mx+'px';cd.style.top=my+'px';});
+(function aR(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;cr.style.left=rx+'px';cr.style.top=ry+'px';requestAnimationFrame(aR);})();
+document.querySelectorAll('a,button,.scard,.pcard,.stat,.soc').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('hov'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('hov'));
+});
+
+/* ── 3D TILT ── */
+document.querySelectorAll('[data-tilt]').forEach(el=>{
+  el.addEventListener('mousemove',e=>{
+    const r=el.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+    el.style.transform=`perspective(1000px) rotateY(${x*11}deg) rotateX(${-y*9}deg) scale(1.02)`;
+    el.style.transition='transform .06s linear';
+  });
+  el.addEventListener('mouseleave',()=>{el.style.transform='';el.style.transition='transform .65s cubic-bezier(.34,1.56,.64,1)';});
+});
+
+/* ── SCROLL REVEAL ── */
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target);}});
+},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+document.querySelectorAll('[data-r],[data-stag]').forEach(el=>io.observe(el));
+
+/* ── SERVICES TRACK ── */
+const trk=document.getElementById('svcTrack');
+let tidx=0;const cw=342;
+function mv(d){const m=Math.floor(trk.children.length-window.innerWidth/cw);tidx=Math.max(0,Math.min(tidx+d,m));trk.style.transform=`translateX(-${tidx*cw}px)`;}
+document.getElementById('tL').addEventListener('click',()=>mv(-1));
+document.getElementById('tR').addEventListener('click',()=>mv(1));
+let drag=false,sx=0,ss=0;
+trk.addEventListener('mousedown',e=>{drag=true;sx=e.clientX;ss=tidx*cw;trk.style.transition='none';});
+document.addEventListener('mousemove',e=>{if(!drag)return;trk.style.transform=`translateX(-${ss+sx-e.clientX}px)`;});
+document.addEventListener('mouseup',e=>{if(!drag)return;drag=false;trk.style.transition='transform .65s cubic-bezier(.25,.46,.45,.94)';tidx=Math.max(0,Math.round((ss+sx-e.clientX)/cw));mv(0);});
+
+/* ── FORM ── */
+document.getElementById('mf').addEventListener('submit',async function(e){
+  e.preventDefault();const btn=document.getElementById('sb');
+  btn.textContent='Sending…';btn.disabled=true;
+  try{const res=await fetch(this.action,{method:'POST',body:new FormData(this)});
+    const d=await res.json();
+    if(d.success){document.getElementById('sover').style.display='flex';this.reset();}
+    btn.textContent='Send Message to hi@iDilsh.Top ✦';btn.disabled=false;
+  }catch{btn.textContent='Send Message to hi@iDilsh.Top ✦';btn.disabled=false;}
+});
+
+/* ── NAV ACTIVE ── */
+window.addEventListener('scroll',()=>{
+  const sy=window.scrollY;
+  document.querySelectorAll('.npill a[href^="#"]').forEach(a=>a.classList.remove('active'));
+  ['about','services','pricing','contact'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&sy>=el.offsetTop-220){
+      document.querySelectorAll('.npill a[href^="#"]').forEach(a=>a.classList.remove('active'));
+      const lnk=document.querySelector(`.npill a[href="#${id}"]`);
+      if(lnk)lnk.classList.add('active');
+    }
+  });
+});
+</script>
+</body>
+</html>            border-top: none;
             padding: 0.9rem 5%;
             position: sticky;
             top: 0;
