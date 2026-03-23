@@ -3,294 +3,958 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iDilsh Network | Ignite Brands • Illuminate Digital</title>
+    <title>iDilsh Network | Creative Digital Agency - Sri Lanka</title>
+    <meta name="description" content="iDilsh Network - Creative Minds Ignite Brands. Professional graphic design, video editing, AI-powered content, web development & social media management at lowest cost in Sri Lanka.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#7c3aed',
+                        secondary: '#ec4899',
+                        accent: '#10b981',
+                        cream: '#fafaf9',
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-delayed': 'float 6s ease-in-out 3s infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'gradient-x': 'gradient-x 15s ease infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        'gradient-x': {
+                            '0%, 100%': { 'background-position': '0% 50%' },
+                            '50%': { 'background-position': '100% 50%' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
     <style>
-        :root {
-            --primary: #7c3aed;
-            --primary-light: #a78bfa;
-            --accent: #ec4899;
-            --bg: #f8f9fc;
-            --card: rgba(255, 255, 255, 0.75);
-        }
-
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background: var(--bg);
-            color: #1e293b;
-            scroll-behavior: smooth;
-        }
-
-        .section-title {
-            font-family: 'Playfair Display', serif;
-        }
-
-        .gradient-text {
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
+        /* Custom Glassmorphism */
         .glass {
-            background: var(--card);
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255,255,255,0.4);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
         }
-
-        .float-slow {
-            animation: float 12s ease-in-out infinite;
+        
+        .glass-dark {
+            background: rgba(124, 58, 237, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(124, 58, 237, 0.2);
         }
-
-        .pulse-slow {
-            animation: pulse 8s ease-in-out infinite;
+        
+        /* Gradient Text */
+        .text-gradient {
+            background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-35px) rotate(3deg); }
+        
+        /* Animated Background Blobs */
+        .blob {
+            position: absolute;
+            filter: blur(80px);
+            opacity: 0.4;
+            z-index: -1;
         }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.4; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.15); }
+        
+        .blob-1 {
+            background: #7c3aed;
+            width: 500px;
+            height: 500px;
+            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            animation: morph 8s ease-in-out infinite;
         }
-
-        .service-card {
-            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        
+        .blob-2 {
+            background: #ec4899;
+            width: 400px;
+            height: 400px;
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            animation: morph 10s ease-in-out infinite reverse;
         }
-
-        .service-card:hover {
-            transform: translateY(-16px) scale(1.04);
-            box-shadow: 0 30px 60px -15px rgba(124,58,237,0.18);
+        
+        @keyframes morph {
+            0%, 100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+            50% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
         }
-
-        .hero-bg {
-            background: linear-gradient(135deg, #f0f4ff 0%, #f3e8ff 50%, #ffe4f0 100%);
-        }
-
-        /* Fade-in on scroll */
-        .fade-in {
+        
+        /* Scroll Reveal Animation Classes */
+        .reveal {
             opacity: 0;
-            transform: translateY(40px);
-            transition: all 1.2s ease-out;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
         }
-
-        .fade-in.visible {
+        
+        .reveal.active {
             opacity: 1;
             transform: translateY(0);
         }
+        
+        /* WhatsApp Pulse */
+        .whatsapp-pulse {
+            animation: whatsapp-pulse 2s infinite;
+        }
+        
+        @keyframes whatsapp-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(37, 211, 102, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #fafaf9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            border-radius: 5px;
+        }
+        
+        /* Service Card Hover */
+        .service-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .service-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px -15px rgba(124, 58, 237, 0.3);
+        }
+        
+        /* Pricing Card Popular Badge */
+        .popular-badge {
+            background: linear-gradient(90deg, #7c3aed, #ec4899);
+            background-size: 200% 200%;
+            animation: gradient-x 3s ease infinite;
+        }
     </style>
 </head>
-<body class="antialiased">
+<body class="bg-cream text-gray-800 antialiased overflow-x-hidden">
 
-    <!-- NAVBAR -->
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 shadow-sm">
-        <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-11 h-11 bg-gradient-to-br from-violet-500 to-pink-500 rounded-2xl flex items-center justify-center text-3xl font-black text-white shadow-lg">iD</div>
-                <span class="text-3xl font-bold tracking-tight text-gray-900">iDilsh<span class="text-violet-600">Network</span></span>
+    <!-- Floating Background Elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="blob blob-1 top-0 left-0 translate-x-[-30%] translate-y-[-30%]"></div>
+        <div class="blob blob-2 top-40 right-0 translate-x-[30%]"></div>
+        <div class="blob blob-1 bottom-0 left-1/2 translate-y-[50%] opacity-20" style="background: #10b981; animation-delay: -4s;"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 top-0">
+        <div class="glass border-b border-white/20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-20">
+                    <!-- Logo -->
+                    <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                            iD
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="font-display font-bold text-xl tracking-tight text-gray-900">iDilsh Network</span>
+                            <span class="text-xs text-gray-500 font-medium">Creative Digital Agency</span>
+                        </div>
+                    </div>
+
+                    <!-- Desktop Menu -->
+                    <div class="hidden md:flex items-center space-x-8">
+                        <a href="#home" class="text-gray-700 hover:text-primary font-medium transition-colors">Home</a>
+                        <a href="#services" class="text-gray-700 hover:text-primary font-medium transition-colors">Services</a>
+                        <a href="#portfolio" class="text-gray-700 hover:text-primary font-medium transition-colors">Portfolio</a>
+                        <a href="#pricing" class="text-gray-700 hover:text-primary font-medium transition-colors">Pricing</a>
+                        <a href="#contact" class="text-gray-700 hover:text-primary font-medium transition-colors">Contact</a>
+                        
+                        <a href="https://wa.me/94773226376" target="_blank" class="whatsapp-pulse bg-[#25D366] text-white px-6 py-2.5 rounded-full font-semibold flex items-center gap-2 hover:bg-[#128C7E] transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                            Chat Now
+                        </a>
+                    </div>
+
+                    <!-- Mobile menu button -->
+                    <div class="md:hidden flex items-center">
+                        <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary focus:outline-none p-2">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <div class="hidden md:flex items-center gap-10 text-gray-700 font-medium">
-                <a href="#services" class="hover:text-violet-600 transition-colors">Services</a>
-                <a href="#portfolio" class="hover:text-violet-600 transition-colors">Portfolio</a>
-                <a href="#pricing" class="hover:text-violet-600 transition-colors">Pricing</a>
-                <a href="#about" class="hover:text-violet-600 transition-colors">About</a>
-            </div>
-
-            <div class="flex items-center gap-4">
-                <a href="https://wa.me/94773226376" target="_blank" class="px-7 py-3.5 bg-gradient-to-r from-violet-600 to-pink-600 text-white font-semibold rounded-2xl hover:shadow-xl hover:shadow-violet-300/30 transition-all flex items-center gap-2">
-                    <i class="fab fa-whatsapp text-xl"></i> WhatsApp
-                </a>
-                <button onclick="document.getElementById('contact-modal').classList.remove('hidden')" class="px-7 py-3.5 border-2 border-violet-500 text-violet-700 font-semibold rounded-2xl hover:bg-violet-50 transition-all">
-                    Get Quote
-                </button>
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="hidden md:hidden glass border-t border-white/20">
+                <div class="px-4 pt-2 pb-6 space-y-2">
+                    <a href="#home" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-white/50">Home</a>
+                    <a href="#services" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-white/50">Services</a>
+                    <a href="#portfolio" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-white/50">Portfolio</a>
+                    <a href="#pricing" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-white/50">Pricing</a>
+                    <a href="#contact" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-white/50">Contact</a>
+                    <a href="https://wa.me/94773226376" target="_blank" class="block mt-4 bg-[#25D366] text-white px-4 py-3 rounded-xl font-semibold text-center flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                        Chat on WhatsApp
+                    </a>
+                </div>
             </div>
         </div>
     </nav>
 
-    <!-- HERO -->
-    <header class="hero-bg pt-32 pb-24 relative overflow-hidden">
-        <div class="absolute inset-0 opacity-30 pointer-events-none">
-            <div class="absolute top-20 left-20 w-96 h-96 bg-pink-300 rounded-full blur-3xl pulse-slow"></div>
-            <div class="absolute bottom-10 right-10 w-80 h-80 bg-violet-300 rounded-full blur-3xl float-slow"></div>
-        </div>
-
-        <div class="max-w-7xl mx-auto px-6 relative z-10 grid md:grid-cols-2 gap-16 items-center">
-            <div class="space-y-10 fade-in">
-                <div class="inline-flex items-center gap-3 bg-white/80 glass px-6 py-3 rounded-3xl text-sm font-medium text-violet-700">
-                    <span class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span>
-                    Sri Lanka's Most Creative & Affordable AI Agency
+    <!-- Hero Section -->
+    <section id="home" class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center">
+                <!-- Sinhala Welcome -->
+                <div class="reveal mb-4">
+                    <span class="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-secondary/10 text-primary font-semibold text-sm border border-primary/20">
+                        ආයුබෝවන්! Welcome to iDilsh Network ☺️
+                    </span>
                 </div>
 
-                <h1 class="text-6xl md:text-8xl font-extrabold leading-none tracking-tight section-title">
-                    Creative Minds<br>
-                    <span class="gradient-text">Ignite</span><br>Brands
+                <!-- Main Headline -->
+                <h1 class="reveal font-display font-bold text-5xl md:text-7xl lg:text-8xl leading-tight mb-6 tracking-tight" style="transition-delay: 100ms;">
+                    <span class="block text-gray-900">Creative Minds</span>
+                    <span class="block text-gradient mt-2">Ignite Brands</span>
                 </h1>
 
-                <p class="text-xl md:text-2xl text-gray-700 max-w-xl">
-                    We transform bold ideas into unforgettable digital experiences.<br>
-                    <span class="font-semibold text-violet-700">AI Graphics • Motion • Websites • Social Growth</span><br>
-                    Fastest turnaround • Lowest prices in Sri Lanka
+                <!-- Subheadline -->
+                <p class="reveal text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto mb-8 font-medium leading-relaxed" style="transition-delay: 200ms;">
+                    Convert Ideas into Magical Digital Experiences – <span class="text-secondary font-bold">Lowest Cost in Sri Lanka</span>
                 </p>
 
-                <div class="flex flex-wrap gap-5">
-                    <a href="https://wa.me/94773226376" target="_blank" class="px-10 py-6 bg-gradient-to-r from-violet-600 to-pink-600 text-white rounded-3xl text-xl font-bold shadow-xl hover:shadow-2xl hover:shadow-violet-400/40 transition-all flex items-center gap-4">
-                        START PROJECT <i class="fas fa-arrow-right"></i>
-                    </a>
-                    <button class="px-10 py-6 border-2 border-violet-400 text-violet-700 rounded-3xl text-xl font-semibold hover:bg-violet-50 transition-all">
-                        See Our Work →
-                    </button>
-                </div>
-
-                <div class="flex gap-10 text-sm text-gray-500 pt-6">
-                    <div>5+ Years</div>
-                    <div>18+ Global Brands</div>
-                    <div>Full Commercial AI Rights</div>
-                </div>
-            </div>
-
-            <!-- Visual side -->
-            <div class="relative hidden md:block fade-in">
-                <div class="glass rounded-3xl p-8 shadow-2xl float-slow">
-                    <div class="text-center">
-                        <div class="text-8xl mb-6">✨</div>
-                        <h3 class="text-4xl font-bold gradient-text">AI Magic</h3>
-                        <p class="mt-4 text-gray-600">Your brand visuals in hours — not weeks</p>
+                <!-- Trust Stats Badges -->
+                <div class="reveal flex flex-wrap justify-center gap-4 mb-10" style="transition-delay: 300ms;">
+                    <div class="glass-card px-6 py-3 rounded-full flex items-center gap-2">
+                        <span class="text-2xl">⭐</span>
+                        <span class="font-bold text-gray-800">5+ Years</span>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-full flex items-center gap-2">
+                        <span class="text-2xl">🌍</span>
+                        <span class="font-bold text-gray-800">18+ Global Projects</span>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-full flex items-center gap-2">
+                        <span class="text-2xl">💰</span>
+                        <span class="font-bold text-gray-800">Lowest Cost SL</span>
+                    </div>
+                    <div class="glass-card px-6 py-3 rounded-full flex items-center gap-2">
+                        <span class="text-2xl">🤖</span>
+                        <span class="font-bold text-gray-800">AI Commercial Rights</span>
                     </div>
                 </div>
 
-                <div class="absolute -bottom-12 -right-12 glass w-72 h-72 rounded-3xl flex items-center justify-center shadow-xl rotate-6 float-slow">
-                    <div class="text-7xl font-black gradient-text opacity-90">iD</div>
+                <!-- CTA Buttons -->
+                <div class="reveal flex flex-col sm:flex-row gap-4 justify-center items-center" style="transition-delay: 400ms;">
+                    <a href="https://wa.me/94773226376" target="_blank" class="whatsapp-pulse group bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white px-8 py-4 rounded-full font-bold text-lg flex items-center gap-3 hover:shadow-2xl transition-all transform hover:scale-105 shadow-lg">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                        Start Your Project on WhatsApp
+                        <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    </a>
+                    <button onclick="openQuoteModal()" class="glass-card px-8 py-4 rounded-full font-bold text-lg text-gray-800 hover:bg-white/80 transition-all flex items-center gap-2 border-2 border-gray-200 hover:border-primary">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                        Get Free Quote
+                    </button>
                 </div>
+
+                <p class="reveal mt-6 text-sm text-gray-500" style="transition-delay: 500ms;">
+                    📍 Based in Colombo, Sri Lanka | 🕐 24/7 Support | 🌐 Message us in ANY language
+                </p>
             </div>
         </div>
-    </header>
 
-    <!-- SERVICES -->
-    <section id="services" class="py-24">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-16 fade-in">
-                <span class="px-6 py-3 bg-violet-100 text-violet-700 text-sm font-semibold rounded-3xl">OUR EXPERTISE</span>
-                <h2 class="section-title text-6xl mt-6">Everything Your Brand Needs,<br>Under One Roof</h2>
+        <!-- Floating Elements -->
+        <div class="absolute top-1/4 left-10 w-20 h-20 bg-gradient-to-br from-primary/30 to-secondary/30 rounded-2xl animate-float blur-sm hidden lg:block"></div>
+        <div class="absolute bottom-1/4 right-10 w-32 h-32 bg-gradient-to-br from-secondary/30 to-accent/30 rounded-full animate-float-delayed blur-sm hidden lg:block"></div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="font-display text-4xl md:text-5xl font-bold text-gray-900 mb-4">Our Creative Services</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">Everything you need to shine online, all in one place. No need for multiple agencies!</p>
             </div>
 
-            <div class="grid md:grid-cols-3 lg:grid-cols-5 gap-8">
-                <div class="service-card glass rounded-3xl p-10 text-center fade-in">
-                    <div class="text-7xl mb-6">🎨</div>
-                    <h3 class="text-3xl font-bold mb-4">Graphic Design</h3>
-                    <p class="text-gray-600">Logos, Brand Kits, Flyers, Social Assets</p>
-                    <div class="mt-6 text-violet-600 font-semibold">From LKR 500 →</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Service 1: Graphic Design -->
+                <div class="service-card glass-card rounded-3xl p-8 reveal group cursor-pointer" onclick="window.open('https://wa.me/94773226376?text=Hi! I need Graphic Design services.', '_blank')">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform shadow-lg">
+                        🎨
+                    </div>
+                    <h3 class="font-display text-2xl font-bold text-gray-900 mb-3">Graphic Design</h3>
+                    <p class="text-gray-600 mb-4 leading-relaxed">Logos, brand kits, business cards, flyers, posters, social media assets, and all print & digital graphics designed to perfection.</p>
+                    <div class="flex items-center text-primary font-semibold group-hover:gap-2 transition-all">
+                        <span>Start Project</span>
+                        <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    </div>
                 </div>
 
-                <div class="service-card glass rounded-3xl p-10 text-center fade-in" style="transition-delay: 150ms;">
-                    <div class="text-7xl mb-6">🎬</div>
-                    <h3 class="text-3xl font-bold mb-4">Video & Motion</h3>
-                    <p class="text-gray-600">Ads, Animations, Intros, Reels</p>
-                    <div class="mt-6 text-violet-600 font-semibold">From LKR 500 →</div>
+                <!-- Service 2: Video & Animation -->
+                <div class="service-card glass-card rounded-3xl p-8 reveal group cursor-pointer" style="transition-delay: 100ms;" onclick="window.open('https://wa.me/94773226376?text=Hi! I need Video Editing services.', '_blank')">
+                    <div class="w-16 h-16 bg-gradient-to-br from-red-400 to-orange-400 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform shadow-lg">
+                        🎬
+                    </div>
+                    <h3 class="font-display text-2xl font-bold text-gray-900 mb-3">Video & Animation</h3>
+                    <p class="text-gray-600 mb-4 leading-relaxed">Professional video edits, logo animations, video ads, intros/outros, slideshows, and stunning motion graphics.</p>
+                    <div class="flex items-center text-primary font-semibold group-hover:gap-2 transition-all">
+                        <span>Start Project</span>
+                        <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    </div>
                 </div>
 
-                <div class="service-card glass rounded-3xl p-10 text-center bg-gradient-to-br from-violet-50 to-pink-50 border-violet-200 fade-in" style="transition-delay: 300ms;">
-                    <div class="text-7xl mb-6">✨</div>
-                    <h3 class="text-3xl font-bold mb-4 gradient-text">AI-Powered</h3>
-                    <p class="text-gray-700 font-medium">Commercial-use AI art & video</p>
-                    <div class="mt-6 text-emerald-600 font-semibold">Sri Lanka's Best →</div>
+                <!-- Service 3: AI-Powered Magic -->
+                <div class="service-card glass-card rounded-3xl p-8 reveal group cursor-pointer border-2 border-primary/30 relative overflow-hidden" style="transition-delay: 200ms;" onclick="window.open('https://wa.me/94773226376?text=Hi! I need AI-Powered content.', '_blank')">
+                    <div class="absolute top-0 right-0 bg-gradient-to-l from-primary to-secondary text-white text-xs font-bold px-4 py-1 rounded-bl-xl">
+                        SRI LANKA'S BEST
+                    </div>
+                    <div class="w-16 h-16 bg-gradient-to-br from-violet-400 to-fuchsia-400 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform shadow-lg animate-pulse-slow">
+                        ✨
+                    </div>
+                    <h3 class="font-display text-2xl font-bold text-gray-900 mb-3">AI-Powered Magic</h3>
+                    <p class="text-gray-600 mb-4 leading-relaxed">High-quality AI-generated graphics, promo videos, artworks, and ads with <span class="font-bold text-primary">full commercial rights</span>. The future of creative content!</p>
+                    <div class="flex items-center text-primary font-semibold group-hover:gap-2 transition-all">
+                        <span>Start Project</span>
+                        <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    </div>
                 </div>
 
-                <div class="service-card glass rounded-3xl p-10 text-center fade-in" style="transition-delay: 450ms;">
-                    <div class="text-7xl mb-6">🌐</div>
-                    <h3 class="text-3xl font-bold mb-4">Web Design</h3>
-                    <p class="text-gray-600">Landing Pages, Portfolios, Shops</p>
-                    <div class="mt-6 text-violet-600 font-semibold">From LKR 500 →</div>
+                <!-- Service 4: Web Design -->
+                <div class="service-card glass-card rounded-3xl p-8 reveal group cursor-pointer" style="transition-delay: 300ms;" onclick="window.open('https://wa.me/94773226376?text=Hi! I need Web Design services.', '_blank')">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform shadow-lg">
+                        🌐
+                    </div>
+                    <h3 class="font-display text-2xl font-bold text-gray-900 mb-3">Web Design & Development</h3>
+                    <p class="text-gray-600 mb-4 leading-relaxed">Landing pages, portfolios, e-commerce sites, and full websites at the <span class="font-bold text-secondary">lowest cost in Sri Lanka</span>. Modern, fast, and responsive.</p>
+                    <div class="flex items-center text-primary font-semibold group-hover:gap-2 transition-all">
+                        <span>Start Project</span>
+                        <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    </div>
                 </div>
 
-                <div class="service-card glass rounded-3xl p-10 text-center fade-in" style="transition-delay: 600ms;">
-                    <div class="text-7xl mb-6">📱</div>
-                    <h3 class="text-3xl font-bold mb-4">Social Growth</h3>
-                    <p class="text-gray-600">Strategy, Content, Analytics</p>
-                    <div class="mt-6 text-violet-600 font-semibold">Monthly Plans →</div>
+                <!-- Service 5: Social Media -->
+                <div class="service-card glass-card rounded-3xl p-8 reveal group cursor-pointer md:col-span-2 lg:col-span-2" style="transition-delay: 400ms;" onclick="window.open('https://wa.me/94773226376?text=Hi! I need Social Media Management.', '_blank')">
+                    <div class="flex flex-col md:flex-row md:items-start gap-6">
+                        <div class="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-400 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-lg flex-shrink-0">
+                            📱
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-display text-2xl font-bold text-gray-900 mb-3">Social Media Management</h3>
+                            <p class="text-gray-600 mb-4 leading-relaxed">Complete content creation, strategy, posting & growth management for Facebook, Instagram, TikTok, YouTube, and Pinterest. Includes advanced analytics, SEO-optimized captions, and trending hashtags to maximize your reach.</p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">Facebook</span>
+                                <span class="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-sm font-medium">Instagram</span>
+                                <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">TikTok</span>
+                                <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">YouTube</span>
+                            </div>
+                            <div class="flex items-center text-primary font-semibold group-hover:gap-2 transition-all">
+                                <span>Start Project</span>
+                                <svg class="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Free Guides CTA -->
+            <div class="mt-12 text-center reveal">
+                <div class="glass-card rounded-2xl p-6 inline-block max-w-2xl border-2 border-accent/30 bg-gradient-to-r from-accent/5 to-transparent">
+                    <p class="text-lg font-semibold text-gray-800 flex items-center justify-center gap-2 flex-wrap">
+                        <span class="text-2xl">🎁</span>
+                        <span>Get FREE Design/Brand/Social Media Growth Guides when you message us!</span>
+                        <a href="https://wa.me/94773226376?text=Hi! I'm interested in the free guides." target="_blank" class="text-accent hover:underline font-bold whitespace-nowrap">Claim Now →</a>
+                    </p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- FINAL CTA -->
-    <section class="py-24 bg-gradient-to-br from-violet-100 via-pink-100 to-purple-100">
-        <div class="max-w-5xl mx-auto text-center px-6 fade-in">
-            <h2 class="section-title text-6xl mb-8">Ready to Make Your Brand Shine?</h2>
-            <p class="text-2xl text-gray-700 mb-10">Drop us a message — first consultation is always free.</p>
-            <a href="https://wa.me/94773226376?text=Hi%20iDilsh%20Network!%20Let's%20ignite%20my%20brand" target="_blank"
-               class="inline-flex items-center gap-5 bg-gradient-to-r from-violet-600 to-pink-600 text-white px-16 py-8 rounded-3xl text-2xl font-bold shadow-2xl hover:shadow-violet-400/50 transition-all">
-                CHAT ON WHATSAPP <i class="fas fa-arrow-right text-3xl"></i>
-            </a>
+    <!-- Stats Section -->
+    <section class="py-20 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="text-center reveal">
+                    <div class="text-5xl font-display font-bold text-gradient mb-2">5+</div>
+                    <div class="text-gray-600 font-medium">Years Experience</div>
+                </div>
+                <div class="text-center reveal" style="transition-delay: 100ms;">
+                    <div class="text-5xl font-display font-bold text-gradient mb-2">18+</div>
+                    <div class="text-gray-600 font-medium">Global Projects</div>
+                </div>
+                <div class="text-center reveal" style="transition-delay: 200ms;">
+                    <div class="text-5xl font-display font-bold text-gradient mb-2">24/7</div>
+                    <div class="text-gray-600 font-medium">WhatsApp Support</div>
+                </div>
+                <div class="text-center reveal" style="transition-delay: 300ms;">
+                    <div class="text-5xl font-display font-bold text-gradient mb-2">48h</div>
+                    <div class="text-gray-600 font-medium">Fast Turnaround</div>
+                </div>
+            </div>
         </div>
     </section>
 
-    <!-- FOOTER -->
-    <footer class="bg-white py-16 border-t border-gray-200">
-        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-12 text-gray-600">
-            <div>
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-10 h-10 bg-gradient-to-br from-violet-500 to-pink-500 rounded-2xl flex items-center justify-center text-2xl font-black text-white">iD</div>
-                    <span class="text-2xl font-bold text-gray-900">iDilsh Network</span>
-                </div>
-                <p class="text-sm">Colombo-based creative network helping brands stand out online since 2020.</p>
+    <!-- Portfolio Teaser -->
+    <section id="portfolio" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 reveal">
+                <h2 class="font-display text-4xl md:text-5xl font-bold text-gray-900 mb-4">Our Recent Work</h2>
+                <p class="text-xl text-gray-600">See how we've helped brands ignite their digital presence</p>
             </div>
 
-            <div>
-                <h4 class="font-semibold text-gray-900 mb-4">Quick Links</h4>
-                <div class="space-y-3 text-sm">
-                    <a href="#services" class="hover:text-violet-600 block">Services</a>
-                    <a href="#pricing" class="hover:text-violet-600 block">Pricing</a>
-                    <a href="https://wa.me/94773226376" class="hover:text-violet-600 block">Contact</a>
+            <!-- Portfolio Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div class="reveal group relative overflow-hidden rounded-2xl aspect-[4/3] cursor-pointer" onclick="window.open('https://www.facebook.com/idilshnetwork', '_blank')">
+                    <div class="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 group-hover:scale-110 transition-transform duration-500"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                            <span class="text-4xl">🎨</span>
+                        </div>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/70 to-transparent text-white">
+                        <h3 class="font-bold text-lg">Brand Identity Design</h3>
+                        <p class="text-sm opacity-90">Logo & Visual Systems</p>
+                    </div>
+                </div>
+
+                <div class="reveal group relative overflow-hidden rounded-2xl aspect-[4/3] cursor-pointer" style="transition-delay: 100ms;" onclick="window.open('https://www.facebook.com/idilshnetwork', '_blank')">
+                    <div class="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 group-hover:scale-110 transition-transform duration-500"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                            <span class="text-4xl">🌐</span>
+                        </div>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/70 to-transparent text-white">
+                        <h3 class="font-bold text-lg">Web Development</h3>
+                        <p class="text-sm opacity-90">E-commerce & Portfolios</p>
+                    </div>
+                </div>
+
+                <div class="reveal group relative overflow-hidden rounded-2xl aspect-[4/3] cursor-pointer" style="transition-delay: 200ms;" onclick="window.open('https://www.facebook.com/idilshnetwork', '_blank')">
+                    <div class="absolute inset-0 bg-gradient-to-br from-pink-400/20 to-rose-400/20 group-hover:scale-110 transition-transform duration-500"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                            <span class="text-4xl">📱</span>
+                        </div>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/70 to-transparent text-white">
+                        <h3 class="font-bold text-lg">Social Media Content</h3>
+                        <p class="text-sm opacity-90">Growth Campaigns</p>
+                    </div>
                 </div>
             </div>
 
-            <div>
-                <h4 class="font-semibold text-gray-900 mb-4">Reach Us 24/7</h4>
-                <a href="mailto:hi@iDilsh.Top" class="block hover:text-violet-600">hi@iDilsh.Top</a>
-                <a href="https://wa.me/94773226376" class="block hover:text-violet-600 mt-1">+94 77 322 6376</a>
-                <p class="text-xs mt-8 text-gray-400">© 2026 iDilsh Network</p>
+            <div class="text-center reveal">
+                <a href="https://www.facebook.com/idilshnetwork" target="_blank" class="inline-flex items-center gap-2 px-8 py-4 bg-[#1877F2] text-white rounded-full font-semibold hover:bg-[#166fe5] transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    View Full Portfolio on Facebook
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="font-display text-4xl md:text-5xl font-bold text-gray-900 mb-4">Transparent Pricing</h2>
+                <p class="text-xl text-gray-600">Best value in Sri Lanka. No hidden fees.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- One Creation -->
+                <div class="reveal glass-card rounded-3xl p-8 flex flex-col hover:scale-105 transition-transform duration-300">
+                    <div class="mb-4">
+                        <h3 class="font-display text-xl font-bold text-gray-900">One Creation</h3>
+                        <p class="text-sm text-gray-500 mt-1">Perfect for single projects</p>
+                    </div>
+                    <div class="mb-6">
+                        <span class="text-4xl font-display font-bold text-gray-900">LKR 500</span>
+                        <span class="text-gray-500">+</span>
+                    </div>
+                    <ul class="space-y-3 mb-8 flex-1 text-gray-600">
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>One-off project pricing</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Logos, posts, videos</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Simple websites</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Price depends on scope</span>
+                        </li>
+                    </ul>
+                    <a href="https://wa.me/94773226376?text=Hi! I'm interested in the One Creation plan." target="_blank" class="w-full py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:border-primary hover:text-primary transition-all text-center">
+                        Get Started
+                    </a>
+                </div>
+
+                <!-- Budget Plan -->
+                <div class="reveal glass-card rounded-3xl p-8 flex flex-col border-2 border-primary relative transform scale-105 shadow-2xl" style="transition-delay: 100ms;">
+                    <div class="popular-badge absolute -top-4 left-1/2 transform -translate-x-1/2 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg">
+                        MOST POPULAR
+                    </div>
+                    <div class="mb-4">
+                        <h3 class="font-display text-xl font-bold text-gray-900">Budget Monthly</h3>
+                        <p class="text-sm text-gray-500 mt-1">Best for startups & small brands</p>
+                    </div>
+                    <div class="mb-6">
+                        <span class="text-4xl font-display font-bold text-gradient">LKR 5,000</span>
+                        <span class="text-gray-500">/month</span>
+                    </div>
+                    <ul class="space-y-3 mb-8 flex-1 text-gray-600">
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span class="font-semibold text-gray-900">5 posts/videos per month</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Complete brand setup</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>SEO captions & hashtags</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Monthly analytics report</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span class="font-semibold text-primary">24/7 WhatsApp support</span>
+                        </li>
+                    </ul>
+                    <a href="https://wa.me/94773226376?text=Hi! I'm interested in the Budget Monthly Plan (LKR 5,000)." target="_blank" class="w-full py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:shadow-lg transition-all text-center transform hover:scale-105">
+                        Choose Budget Plan
+                    </a>
+                </div>
+
+                <!-- Business Plan -->
+                <div class="reveal glass-card rounded-3xl p-8 flex flex-col hover:scale-105 transition-transform duration-300" style="transition-delay: 200ms;">
+                    <div class="mb-4">
+                        <h3 class="font-display text-xl font-bold text-gray-900">Business Monthly</h3>
+                        <p class="text-sm text-gray-500 mt-1">For growing businesses</p>
+                    </div>
+                    <div class="mb-6">
+                        <span class="text-4xl font-display font-bold text-gray-900">LKR 12,000</span>
+                        <span class="text-gray-500">/month</span>
+                    </div>
+                    <ul class="space-y-3 mb-8 flex-1 text-gray-600">
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span class="font-semibold text-gray-900">15 posts/videos per month</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Advanced brand setup</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Paid ads management</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Deep analytics & insights</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span class="font-semibold text-primary">Priority support</span>
+                        </li>
+                    </ul>
+                    <a href="https://wa.me/94773226376?text=Hi! I'm interested in the Business Monthly Plan (LKR 12,000)." target="_blank" class="w-full py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-800 transition-all text-center">
+                        Choose Business Plan
+                    </a>
+                </div>
+
+                <!-- Enterprise -->
+                <div class="reveal glass-card rounded-3xl p-8 flex flex-col hover:scale-105 transition-transform duration-300 border-2 border-accent/30" style="transition-delay: 300ms;">
+                    <div class="mb-4">
+                        <h3 class="font-display text-xl font-bold text-gray-900">Enterprise</h3>
+                        <p class="text-sm text-gray-500 mt-1">Full-service solution</p>
+                    </div>
+                    <div class="mb-6">
+                        <span class="text-4xl font-display font-bold text-gray-900">Custom</span>
+                    </div>
+                    <ul class="space-y-3 mb-8 flex-1 text-gray-600">
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span class="font-semibold text-gray-900">Up to 30 posts/videos</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Premium features & AI tools</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Dedicated account manager</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Strategy consultations</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span class="font-semibold text-primary">White-glove service</span>
+                        </li>
+                    </ul>
+                    <a href="https://wa.me/94773226376?text=Hi! I'm interested in the Enterprise Plan. Can we discuss custom pricing?" target="_blank" class="w-full py-3 rounded-xl border-2 border-accent text-accent font-semibold hover:bg-accent hover:text-white transition-all text-center">
+                        Contact for Quote
+                    </a>
+                </div>
+            </div>
+
+            <!-- Guarantee -->
+            <div class="mt-12 text-center reveal">
+                <p class="text-gray-600 flex items-center justify-center gap-2 flex-wrap">
+                    <span class="text-2xl">⚡</span>
+                    <span>Many projects delivered in</span>
+                    <span class="font-bold text-primary">24-48 hours</span>
+                    <span>|</span>
+                    <span class="text-2xl">💯</span>
+                    <span>Satisfaction guaranteed</span>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-24 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16 reveal">
+                <h2 class="font-display text-4xl md:text-5xl font-bold text-gray-900 mb-4">Happy Clients</h2>
+                <p class="text-xl text-gray-600">Don't just take our word for it</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="reveal glass-card rounded-2xl p-8 relative">
+                    <div class="text-4xl text-primary/30 absolute top-4 left-4 font-serif">"</div>
+                    <p class="text-gray-700 mb-6 relative z-10 italic">iDilsh Network transformed our brand completely. The AI-generated content is incredible and the prices are unbeatable in Sri Lanka!</p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-bold">S</div>
+                        <div>
+                            <div class="font-bold text-gray-900">Sarah M.</div>
+                            <div class="text-sm text-gray-500">Startup Founder</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal glass-card rounded-2xl p-8 relative" style="transition-delay: 100ms;">
+                    <div class="text-4xl text-secondary/30 absolute top-4 left-4 font-serif">"</div>
+                    <p class="text-gray-700 mb-6 relative z-10 italic">24/7 support is real! They helped me launch my e-commerce site in just 2 days. Highly recommend for any local business.</p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-secondary to-accent rounded-full flex items-center justify-center text-white font-bold">K</div>
+                        <div>
+                            <div class="font-bold text-gray-900">Kasun P.</div>
+                            <div class="text-sm text-gray-500">Retail Business Owner</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal glass-card rounded-2xl p-8 relative" style="transition-delay: 200ms;">
+                    <div class="text-4xl text-accent/30 absolute top-4 left-4 font-serif">"</div>
+                    <p class="text-gray-700 mb-6 relative z-10 italic">The social media management package saved me so much time. My Instagram grew 300% in just 3 months. Amazing value!</p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-accent to-primary rounded-full flex items-center justify-center text-white font-bold">N</div>
+                        <div>
+                            <div class="font-bold text-gray-900">Nimasha T.</div>
+                            <div class="text-sm text-gray-500">Influencer & Entrepreneur</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section id="contact" class="py-24 relative">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="reveal glass rounded-3xl p-12 md:p-16 text-center relative overflow-hidden border border-white/50 shadow-2xl">
+                <!-- Background decoration -->
+                <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 z-0"></div>
+                <div class="absolute -top-24 -right-24 w-48 h-48 bg-primary/20 rounded-full blur-3xl"></div>
+                <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-secondary/20 rounded-full blur-3xl"></div>
+
+                <div class="relative z-10">
+                    <h2 class="font-display text-4xl md:text-6xl font-bold text-gray-900 mb-6">Ready to Ignite<br><span class="text-gradient">Your Brand?</span></h2>
+                    <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">Join 18+ global brands who trust iDilsh Network. Let's create something magical together at the lowest cost in Sri Lanka.</p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+                        <a href="https://wa.me/94773226376" target="_blank" class="whatsapp-pulse group bg-[#25D366] text-white px-10 py-5 rounded-full font-bold text-xl flex items-center gap-3 hover:bg-[#128C7E] transition-all shadow-xl hover:shadow-2xl transform hover:scale-105">
+                            <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                            Chat on WhatsApp Now
+                        </a>
+                        <button onclick="openQuoteModal()" class="px-10 py-5 rounded-full font-bold text-xl text-gray-700 border-2 border-gray-300 hover:border-primary hover:text-primary transition-all bg-white/50 backdrop-blur-sm">
+                            Get Free Quote
+                        </button>
+                    </div>
+
+                    <div class="flex flex-wrap justify-center gap-6 text-gray-600">
+                        <a href="mailto:hi@iDilsh.Top" class="flex items-center gap-2 hover:text-primary transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            hi@iDilsh.Top
+                        </a>
+                        <a href="tel:+94773226376" class="flex items-center gap-2 hover:text-primary transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                            +94 77 322 6376
+                        </a>
+                    </div>
+
+                    <p class="mt-6 text-sm text-gray-500">
+                        🌐 Message us in ANY language – 24/7 reply guaranteed | 📍 Colombo, Sri Lanka
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl">
+                            iD
+                        </div>
+                        <span class="font-display font-bold text-xl text-gray-900">iDilsh Network</span>
+                    </div>
+                    <p class="text-gray-600 mb-6 max-w-md">Creative digital agency based in Colombo, Sri Lanka. Helping small brands and local businesses shine online with powerful visuals, smart strategy, and AI-powered solutions at the lowest cost.</p>
+                    <div class="flex gap-4">
+                        <a href="https://www.facebook.com/idilshnetwork" target="_blank" class="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                        </a>
+                        <a href="https://instagram.com/idilshnet" target="_blank" class="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white flex items-center justify-center hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                        </a>
+                        <a href="https://wa.me/94773226376" target="_blank" class="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-gray-900 mb-4">Services</h4>
+                    <ul class="space-y-2 text-gray-600">
+                        <li><a href="#services" class="hover:text-primary transition-colors">Graphic Design</a></li>
+                        <li><a href="#services" class="hover:text-primary transition-colors">Video & Animation</a></li>
+                        <li><a href="#services" class="hover:text-primary transition-colors">AI-Powered Content</a></li>
+                        <li><a href="#services" class="hover:text-primary transition-colors">Web Development</a></li>
+                        <li><a href="#services" class="hover:text-primary transition-colors">Social Media</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-gray-900 mb-4">Company</h4>
+                    <ul class="space-y-2 text-gray-600">
+                        <li><a href="#portfolio" class="hover:text-primary transition-colors">Portfolio</a></li>
+                        <li><a href="#pricing" class="hover:text-primary transition-colors">Pricing</a></li>
+                        <li><a href="https://wa.me/94773226376" class="hover:text-primary transition-colors">Contact</a></li>
+                        <li><span class="text-sm">📍 Colombo, Sri Lanka</span></li>
+                        <li><span class="text-sm">✉️ hi@iDilsh.Top</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-gray-500 text-sm">© 2026 iDilsh Network. All rights reserved. <span class="text-primary font-semibold">Lowest Cost Creative Agency in Sri Lanka.</span></p>
+                <div class="flex items-center gap-2 text-sm text-gray-500">
+                    <span>Made with</span>
+                    <span class="text-red-500">❤️</span>
+                    <span>in Colombo</span>
+                </div>
             </div>
         </div>
     </footer>
 
-    <!-- CONTACT MODAL -->
-    <div id="contact-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-        <div class="glass max-w-lg w-full mx-6 p-10 rounded-3xl relative">
-            <button onclick="document.getElementById('contact-modal').classList.add('hidden')" class="absolute top-6 right-6 text-3xl text-gray-500 hover:text-gray-900">&times;</button>
-            <h3 class="text-4xl font-bold mb-8 text-center gradient-text">Let's Create Together</h3>
-            <form class="space-y-6">
-                <input type="text" placeholder="Your Name" class="w-full p-5 rounded-2xl border border-gray-300 focus:border-violet-500 outline-none" required>
-                <input type="email" placeholder="Email or WhatsApp" class="w-full p-5 rounded-2xl border border-gray-300 focus:border-violet-500 outline-none" required>
-                <textarea placeholder="Tell us about your project..." rows="5" class="w-full p-5 rounded-2xl border border-gray-300 focus:border-violet-500 outline-none" required></textarea>
-                <button type="submit" class="w-full py-6 bg-gradient-to-r from-violet-600 to-pink-600 text-white rounded-2xl font-bold text-xl shadow-lg hover:shadow-xl transition-all">SEND MESSAGE</button>
-            </form>
+    <!-- Quote Modal -->
+    <div id="quoteModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" onclick="closeQuoteModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom glass-card rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-white/50">
+                <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                            <h3 class="text-2xl leading-6 font-display font-bold text-gray-900 mb-4" id="modal-title">Get a Free Quote</h3>
+                            <p class="text-sm text-gray-500 mb-6">Fill out the form below and we'll get back to you within 24 hours via WhatsApp or email.</p>
+                            
+                            <form id="quoteForm" onsubmit="handleQuoteSubmit(event)">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                                        <input type="text" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-white/50" placeholder="John Doe">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
+                                        <input type="tel" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-white/50" placeholder="+94 77 123 4567">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Service Needed</label>
+                                        <select required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-white/50">
+                                            <option value="">Select a service...</option>
+                                            <option value="graphic">Graphic Design</option>
+                                            <option value="video">Video & Animation</option>
+                                            <option value="ai">AI-Powered Content</option>
+                                            <option value="web">Web Design & Development</option>
+                                            <option value="social">Social Media Management</option>
+                                            <option value="other">Other / Multiple Services</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Project Details</label>
+                                        <textarea rows="3" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-white/50" placeholder="Tell us about your project..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="mt-6 flex gap-3">
+                                    <button type="button" onclick="closeQuoteModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+                                    <button type="submit" class="flex-1 px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg font-semibold hover:shadow-lg transition-all">Send Request</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Floating WhatsApp Button -->
+    <a href="https://wa.me/94773226376" target="_blank" class="fixed bottom-6 right-6 z-40 whatsapp-pulse bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform flex items-center justify-center group">
+        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        <span class="absolute right-full mr-3 bg-gray-900 text-white px-3 py-1 rounded-lg text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Chat with us!</span>
+    </a>
+
     <script>
-        // Simple fade-in on scroll
-        const fadeElements = document.querySelectorAll('.fade-in');
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Close mobile menu when clicking a link
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        });
+
+        // Scroll reveal animation
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
+                    entry.target.classList.add('active');
+                    observer.unobserve(entry.target);
                 }
             });
-        }, { threshold: 0.1 });
+        }, observerOptions);
 
-        fadeElements.forEach(el => observer.observe(el));
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-        // Form submit demo
-        document.querySelector('form')?.addEventListener('submit', e => {
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        let lastScroll = 0;
+
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            
+            if (currentScroll > 100) {
+                navbar.classList.add('shadow-lg');
+            } else {
+                navbar.classList.remove('shadow-lg');
+            }
+            
+            lastScroll = currentScroll;
+        });
+
+        // Quote Modal
+        function openQuoteModal() {
+            document.getElementById('quoteModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeQuoteModal() {
+            document.getElementById('quoteModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function handleQuoteSubmit(e) {
             e.preventDefault();
-            alert('Message sent! We will reply soon ✨');
-            document.getElementById('contact-modal').classList.add('hidden');
+            
+            // Get form data
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            // Create WhatsApp message
+            const message = `Hi iDilsh Network! I need a quote.%0A%0AName: ${data.name || 'Not provided'}%0APhone: ${data.phone || 'Not provided'}%0AService: ${data.service || 'Not selected'}%0ADetails: ${data.details || 'Not provided'}`;
+            
+            // Open WhatsApp with pre-filled message
+            window.open(`https://wa.me/94773226376?text=${message}`, '_blank');
+            
+            // Close modal
+            closeQuoteModal();
+            
+            // Reset form
+            e.target.reset();
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add form field names for the quote form
+        document.querySelectorAll('#quoteForm input, #quoteForm select, #quoteForm textarea').forEach(input => {
+            if (!input.name) {
+                input.name = input.placeholder ? input.placeholder.toLowerCase().replace(/[^a-z0-9]/g, '_') : 'field';
+            }
         });
     </script>
 </body>
