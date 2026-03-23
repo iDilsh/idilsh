@@ -1,472 +1,296 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>iDilsh Network - Sri Lanka</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="iDilsh Network – Creative design, motion graphics, ads AI-powered marketing agency in Sri Lanka.">
-  <meta name="keywords" content="Graphic Design Sri Lanka, Motion Graphics, Social Media Marketing, AI Design Agency">
-  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-  <style>
-    /* Refined Liquid & Grain Animations */
-    @keyframes liquidMove {
-      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      33% { transform: translate(12vw, -8vh) rotate(90deg) scale(1.1); }
-      66% { transform: translate(-8vw, 15vh) rotate(180deg) scale(0.9); }
-      100% { transform: translate(0, 0) rotate(360deg) scale(1); }
-    }
-    
-    @keyframes grain {
-      0%, 100% { transform: translate(0, 0); }
-      10% { transform: translate(-5%, -10%); }
-      30% { transform: translate(3%, -15%); }
-      50% { transform: translate(12%, 9%); }
-      70% { transform: translate(-9%, 4%); }
-      90% { transform: translate(2%, 7%); }
-    }
-    body { 
-      font-family: 'Inter', sans-serif; 
-      margin: 0; 
-      color: #1e293b; 
-      scroll-behavior: smooth; 
-      overflow-x: hidden;
-      background: #ffffff;
-      position: relative;
-    }
-    /* --- CURSOR WITH GLOW --- */
-    .cursor-follower {
-      width: 20px;
-      height: 20px;
-      background: rgba(255, 255, 255, 0.00); backdrop-filter: blur(2px);
-      border: 0.6px solid rgba(255, 255, 255, 0.8); border-radius: 50%;
-      position: fixed;
-      pointer-events: none;
-      z-index: 10000;
-      transition: transform 0.15s ease-out;
-      box-shadow: 0 0 20px rgba(255, 128, 180, 0.8), 0 0 40px rgba(181, 0, 224, 0.4), 0 0 60px rgba(181, 0, 224, 0.2);
-    }
-    .grain-overlay {
-      position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
-      background-image: url('#');
-      opacity: 0.1; pointer-events: none; z-index: 1000;
-    }
-    .liquid-bg {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      z-index: -2; overflow: hidden; background: rgba(255, 255, 255, 0.01);
-    }
-    .blob {
-      position: absolute; width: 35vw; height: 35vw;
-      filter: blur(80px); opacity: 0.45;
-      animation: liquidMove 6s infinite alternate cubic-bezier(0.45, 0, 0.55, 1);
-    }
-    .blob-1 { background: #fd34ee; top: 50px; left: 100px; }
-    .blob-2 { background: #ff2d55; bottom: 5%; right: 5%; animation-duration: 22s; animation-delay: -4s; }
-    .blob-3 { background: #7c3aed; top: 40%; left: 60%; animation-duration: 20s; animation-delay: -8s; }
-    .blob-4 { background: #ff7eb3; bottom: 30%; left: 20%; width: 25vw; height: 25vw; animation-duration: 25s; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; width: 100%; box-sizing: border-box; }
-    
-    /* Container for the pill bar */
-    nav {
-      position: sticky; top: 0; z-index: 1000;
-      display: flex;
-      justify-content: center;
-      margin: 0 10px; padding: 20px 0;
-      background: transparent;
-    }
-    .logo{ padding: 0 40px 0 0;}
-    .nav-links {
-      display: flex;
-      align-items: center;
-      background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.5);
-      padding: 8px;
-      border-radius: 50px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      gap: 10px;
-    }
-    .nav-links a {
-      padding: 12px 24px;
-      text-decoration: none;
-      color: #660e60;
-      font-weight: 700;
-      font-size: 0.9rem;
-      border-radius: 40px;
-      transition: all 0.3s ease-out;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    /* Active/Hover Background Bubble */
-    .nav-links a.active, .nav-links a:hover {
-      background: linear-gradient(90deg, #fecded, #e5d4ef);
-      color: #660e60;
-    }
-    .hero { 
-      min-height: 70vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
-      background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.8);
-      border-radius: 40px; margin-top: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1);
-      margin: 85px 0; padding: 40px 40px; box-sizing: border-box;
-    }
-    .hero h1 { font-size: clamp(2rem, 8vw, 4rem); margin: 0; background: linear-gradient(135deg, #6b21a8 0%, #ff2d55 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .hero p { color: #334155; font-size: clamp(1rem, 3vw, 1.2rem); max-width: 750px; margin: 25px 0; font-weight: 500; }
-    .about-section {
-      display: flex; align-items: center; justify-content: space-between; gap: 50px;
-      margin: 100px 0; padding: 60px; background: rgba(255, 255, 255, 0.3);
-      backdrop-filter: blur(20px); border-radius: 40px; border: 1px solid rgba(255, 255, 255, 0.5);
-    }
-    .about-content { flex: 1; }
-    .about-content h2 { font-size: 2.5rem; color: #1e293b; margin-bottom: 20px; }
-    .about-content p { font-size: 1.1rem; line-height: 1.8; color: #5B175F; margin-bottom: 20px; }
-    .about-image { flex: 0 0 400px; height: 400px; border-radius: 30px; overflow: hidden; border: 5px solid white; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-    .about-image img { width: 100%; height: 100%; object-fit: cover; }
-    .section-title { font-size: 2.8rem; margin: 80px 0 40px; text-align: center; font-weight: 800; color: #1e293b; }
-    .portfolio-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; margin-bottom: 80px; }
-    .portfolio-card { 
-      background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 10px 20px rgba(255, 45, 85, 0.2);
-      border-radius: 30px; overflow: hidden; transition: 0.4s; backdrop-filter: blur(15px); text-align: center
-    }
-    .portfolio-card:hover { transform: scale(1.05); box-shadow: 0 40px 40px rgba(255, 45, 85, 0.2); background: rgba(255, 255, 255, 0.75); border-color: #bf5af2; transition: 0.3s ease-out;}
-    .card-image { height: 160px; background: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; font-size: 40px; }
-    .card-content { padding: 25px; }
-    .card-content h3 { color: #DA4167; margin: 10px 10px 12px 0; }
-    .card-content p { color: #631D76; font-size: 0.95rem; line-height: 1.5; }
-    .pricing-wrapper { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 80px; }
-    .package-card { 
-      background: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255, 255, 255, 0.6); 
-      border-radius: 24px; padding: 40px 25px; transition: 0.4s; backdrop-filter: blur(20px); display: flex; flex-direction: column;
-    }
-    .package-card:hover { transform: translateY(-20px) scale(1.05); background: rgba(255, 255, 255, 0.7); border-color: #ff2d55; }
-    .price { font-size: 2.0rem; font-weight: 800; margin: 15px 0; color: #1e293b; }
-    .feature-list { list-style: none; padding: 0; margin: 20px 0; flex-grow: 1; }
-    .feature-list li { margin-bottom: 10px; font-size: 0.85rem; color: #334155; display: flex; align-items: center; font-weight: 500; }
-    .feature-list li::before { content: '🧊'; color: #ff2d55; margin-right: 10px; font-weight: bold; }
-    .contact-section {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
-      margin-bottom: 80px; padding: 60px; background: rgba(255, 255, 255, 0.3);
-      backdrop-filter: blur(20px); border-radius: 40px; border: 1px solid rgba(255, 255, 255, 0.5);
-      position: relative; overflow: hidden;
-    }
-    .contact-info h2 { font-size: 2.5rem; color: #1e293b; margin-bottom: 20px; }
-    .contact-info p { color: #475569; margin-bottom: 30px; font-size: 1.1rem; }
-    .social-links { display: flex; gap: 15px; flex-wrap: wrap; }
-    .social-tag { background: #3B0270; padding: 12px 20px; border-radius: 12px; text-decoration: none; color: white; font-weight: 700; transition: 0.3s; border: 1px solid rgba(107, 33, 168, 0.1); }
-    .social-tag:hover { background: #6b21a8; color: white; transform: translateY(-5px); }
-    .wa-tag { background: #08CB00; padding: 12px 20px; border-radius: 12px; text-decoration: none; color: white; font-weight: 700; transition: 0.3s; border: 1px solid rgba(107, 33, 168, 0.1); }
-    .wa-tag:hover { background: #29BF12; color: white; transform: translateY(-5px); border: 1px solid rgba(255, 255, 255, 1.5);}
-    .fb-tag { background: #033FFF; padding: 12px 20px; border-radius: 12px; text-decoration: none; color: white; font-weight: 700; transition: 0.3s; border: 1px solid rgba(107, 33, 168, 0.1); }
-    .fb-tag:hover { background: #3330E4; color: white; transform: translateY(-5px); border: 1px solid rgba(255, 255, 255, 1.5);}
-    .tt-tag { background: #3B0270; padding: 12px 20px; border-radius: 12px; text-decoration: none; color: white; font-weight: 700; transition: 0.3s; border: 1px solid rgba(107, 33, 168, 0.1); }
-    .tt-tag:hover { background: #410445; color: white; transform: translateY(-5px); border: 1px solid rgba(255, 255, 255, 1.5);}
-    .yt-tag { background: #F90716; padding: 12px 20px; border-radius: 12px; text-decoration: none; color: white; font-weight: 700; transition: 0.3s; border: 1px solid rgba(107, 33, 168, 0.1); }
-    .yt-tag:hover { background: #F90716; color: white; transform: translateY(-5px); border: 1px solid rgba(255, 255, 255, 1.5);}
-    .contact-form { display: flex; flex-direction: column; gap: 15px; }
-    .contact-form input, .contact-form textarea {
-      padding: 15px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.8);
-      background: rgba(255, 255, 255, 0.5); font-family: inherit; font-size: 1rem; color: #1e293b; width: 100%; box-sizing: border-box;
-    }
-    .contact-form input:focus, .contact-form textarea:focus { outline: none; border-color: #b500e0; background: white; }
-    .success-overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255, 255, 255, 0.95); display: none;
-      flex-direction: column; align-items: center; justify-content: center;
-      z-index: 10; text-align: center; backdrop-filter: blur(10px);
-      animation: fadeIn 0.4s ease forwards;
-    }
-    .success-overlay h3 { color: #b500e0; font-size: 2rem; margin-bottom: 10px; }
-    .success-overlay p { color: #475569; font-weight: 600; }
-    @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-    @media (max-width: 900px) {
-      .about-section, .contact-section { grid-template-columns: 1fr; flex-direction: column; text-align: center; padding: 40px 20px; }
-      .about-image { flex: 0 0 300px; width: 300px; height: 300px; margin: 0 auto; }
-      .social-links { justify-content: center; }
-      nav { 
-        flex-direction: column; 
-        align-items: center;
-        padding: 10px 0;
-      }
-      .logo { padding: 0 0 10px 0; }
-      .nav-links { 
-        width: 95%;
-        overflow-x: auto;
-        justify-content: center;
-        padding: 5px;
-      }
-      .nav-links a { 
-        padding: 8px 12px; 
-        font-size: 0.8rem;
-        white-space: nowrap;
-      }
-      /* Styling for Package Badges */
-      .package-card {
-        position: relative !important;
-        /* Ensure the card doesn't clip the badge */ 
-        padding-top: 50px; 
-      }
-      .card-badge {
-        position: fixed;
-        /* Adjusting to sit clearly on the top border */
-        top: -15px; 
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(90deg, #ff2d55, #b500e0);
-        color: #ffffff;
-        padding: 6px 18px;
-        border-radius: 50px;
-        font-size: 0.7rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        /* High z-index to stay above the blur/glass effect */
-        z-index: 1000; 
-        box-shadow: 0 4px 15px rgba(255, 45, 85, 0.5);
-        white-space: nowrap;
-      }
-      @keyframes badgePulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-      }
-      .pricing-wrapper { grid-template-columns: 1fr; padding: 0 10px; }
-      .portfolio-grid { grid-template-columns: 1fr; }
-      .hero { padding: 40px 20px; border-radius: 20px; }
-      .cursor-follower { display: none; } /* Hide custom cursor on mobile for better UX */
-    }
-    .btn-main { background: linear-gradient(90deg, #6b21a8, #ff2d55); color: #fff; padding: 16px 40px; text-decoration: none; border-radius: 12px; font-weight: 800; display: inline-block; transition: 0.4s; text-align: center; border:none; cursor:pointer;}
-    .btn-main:hover { transform: scale(1.05); box-shadow: 0 10px 20px rgba(255, 45, 85, 0.2); }
-    .btn-start { margin-top: 20px; padding: 10px; border: 2px solid #6b21a8; color: #6b21a8; text-decoration: none; border-radius: 10px; font-weight: 700; transition: 0.3s; text-align: center; }
-    .btn-start:hover { background: #6b21a8; color: #fff; }
-    footer { padding: 40px 0; text-align: center; color: #64748b; font-size: 0.8rem; font-weight: 600; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="iDilsh Network — Creative digital agency for design, video, animation, web, AI content, and social media growth." />
+  <meta name="theme-color" content="#5d1cf1" />
+  <title>iDilsh Network | Creative Digital Agency</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div class="bg-grid"></div>
+  <div class="bg-blob blob-1"></div>
+  <div class="bg-blob blob-2"></div>
+  <div class="bg-blob blob-3"></div>
 
-  <div class="cursor-follower" id="follower"></div>
-  <div class="grain-overlay"></div>
-  <div class="liquid-bg">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
-    <div class="blob blob-4"></div>
-  </div>
-
-  <nav>
-    <div class="logo">
-      <a href="/">
-        <img alt="iDilsh Network Logo" src="https://blogger.googleusercontent.com/img/a/AVvXsEg8ftZ1RgijjQWlHMla_Ley2aB3hOAI8XpreuTA4ShDXcbdTiEALtD9THri5ezCaKGVX4G4pi9MqiHazBy3L_mQU2Ds6_Clq-0YqbTj4FWaJL33xBZKROJT_JgTN0szgZcz5IfmH7XjBeU7_BsyCdWSaCP91Ey44iEhKbcWkUBUbrsSMstZh2KKzZu4gCeu=s1500" style="height: 60px; width: auto; display: block;"/>
+  <header class="site-header" id="siteHeader">
+    <div class="container nav-wrap">
+      <a href="#home" class="brand">
+        <span class="brand-mark">iD</span>
+        <span class="brand-text">iDilsh Network</span>
       </a>
+
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="nav" id="navMenu">
+        <a href="#services">Services</a>
+        <a href="#work">Work</a>
+        <a href="#process">Process</a>
+        <a href="#testimonials">Testimonials</a>
+        <a href="#contact" class="nav-cta">Get Quote</a>
+      </nav>
     </div>
-    <div class="nav-links">
-      <a class="active" href="https://www.idilshnet.top">Course</a>
-      <a href="#about">About</a>
-      <a href="#portfolio">Services</a>
-      <a href="#pricing">Pricing</a>
-      <a href="#contact">Contact</a>
-    </div>
-  </nav>
-  
-  <div class="container">
-    <section class="hero" data-aos="fade-up">
-      <h1>Design, Ads, Marketing.</h1>
-      <p> නිර්මාණ දල්වමින් සිහින ආලෝකවත් කරමු ✨ Ignites Designs, Illuminates Dreams. All Designs, animations, advertising, and social media management - all in one place to Take your brand to the next level.</p>
-      <a class="btn-main" href="#pricing">Get Started</a>
+  </header>
+
+  <main>
+    <section class="hero section" id="home">
+      <div class="container hero-grid">
+        <div class="hero-copy reveal">
+          <div class="eyebrow">Creative Digital Agency</div>
+          <h1>We build premium digital experiences that grow brands.</h1>
+          <p class="hero-text">
+            iDilsh Network helps startups, businesses, and creators stand out with branding, websites, video content, animation, AI assets, and social media growth.
+          </p>
+
+          <div class="hero-actions">
+            <a href="#contact" class="btn btn-primary">Start a Project</a>
+            <a href="#work" class="btn btn-secondary">View Our Work</a>
+          </div>
+
+          <div class="hero-stats">
+            <div class="stat">
+              <strong>100+</strong>
+              <span>Creative Deliveries</span>
+            </div>
+            <div class="stat">
+              <strong>4+</strong>
+              <span>Core Services</span>
+            </div>
+            <div class="stat">
+              <strong>24/7</strong>
+              <span>Support Mindset</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-card reveal">
+          <div class="glass-panel hero-panel">
+            <div class="panel-top">
+              <span class="dot dot-pink"></span>
+              <span class="dot dot-purple"></span>
+              <span class="dot dot-white"></span>
+            </div>
+
+            <div class="panel-content">
+              <div class="mini-tag">Liquid Glass UI</div>
+              <h2>Modern. Clean. High-conversion.</h2>
+              <p>
+                Designed to feel premium, fast, and trustworthy on every screen.
+              </p>
+
+              <div class="service-mini-grid">
+                <div class="mini-card">Brand Design</div>
+                <div class="mini-card">Web Design</div>
+                <div class="mini-card">Motion Video</div>
+                <div class="mini-card">AI Content</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <section class="about-section" data-aos="fade-right" id="about">
-      <div class="about-content">
-        <h2>We're iDilsh Network</h2>
-        <p>Based in Sri Lanka as a Emerging Start-up, comes with over 5+ years of 18+ global project experience and promises to convert ideas into magical digital experiences to help Small brands to shine and win in through the online world.</p>
-        <p>Our mission is to create unique designs at the lowest cost to help you ignite your brand and illuminate the digital world. </p>
-        <a class="btn-start" href="https://web.facebook.com/idilshnetwork">View Recent Projects</a>
-      </div>
-      <div class="about-image" data-aos="zoom-in">
-        <img alt="Motion Graphics Expert" src="https://i.pinimg.com/736x/a8/46/72/a84672d2ac6ec070b9cbe0994719e25b.jpg"/>
+    <section class="section trusted">
+      <div class="container">
+        <p class="section-label reveal">Built for businesses that want to look serious.</p>
+        <div class="logo-row reveal">
+          <span>Startups</span>
+          <span>Agencies</span>
+          <span>Creators</span>
+          <span>Local Brands</span>
+          <span>E-commerce</span>
+        </div>
       </div>
     </section>
 
-    <h2 class="section-title" data-aos="fade-up" id="portfolio">Our Services</h2>
-    <div class="portfolio-grid">
-      <div class="portfolio-card" data-aos="fade-up">
-        <div class="card-image">🎨</div>
-        <div class="card-content">
-          <h3>Graphic Design</h3>
-          <p>Logo, Brand designs, Business Cards, Flyers, Posters, All Printings and All Graphic Solutions.</p>
+    <section class="section" id="services">
+      <div class="container">
+        <div class="section-head reveal">
+          <p class="section-label">Services</p>
+          <h2>Everything you need to build a strong digital presence.</h2>
         </div>
-      </div>
-      <div class="portfolio-card" data-aos="fade-up">
-        <div class="card-image">🎬</div>
-        <div class="card-content">
-          <h3>Video - Animation</h3>
-          <p> Video Edits, Logo Animation, Video Ads,Intro, Outros, SlideShow videos and all Motion Graphics. </p>
-        </div>
-      </div>
-      <div class="portfolio-card" data-aos="fade-up">
-        <div class="card-image">✨</div>
-        <div class="card-content">
-          <h3>Ai Powered</h3>
-          <p>High Quality Ai powered Graphics, Video Ads and Art Works for your all Needs with commercial rights.</p>
-        </div>
-      </div>
-      <div class="portfolio-card" data-aos="fade-up">
-        <div class="card-image">🌏</div>
-        <div class="card-content">
-          <h3>Web Design</h3>
-          <p>Websites Design and Develop from Portfolios, Landing pages to E-commerce at lowest cost in Sri Lanka.</p>
-        </div>
-      </div>
-      <div class="portfolio-card" data-aos="fade-up">
-        <div class="card-image">📈</div>
-        <div class="card-content">
-          <h3>Social Media Management</h3>
-          <p>Strategically Manage FB, YouTube, Tiktok, Pinterest and all Social media with Content Creation .</p>
-        </div>
-      </div>
-      <div class="portfolio-card" data-aos="fade-up">
-        <div class="card-image">🤝</div>
-        <div class="card-content">
-          <h3>Free Guides</h3>
-          <p>Message us for Completely FREE guides to improve your Designs, Skills and Brand Profiles.</p>
-        </div>
-      </div>
-    </div>
 
-    <h2 class="section-title" data-aos="fade-up" id="pricing">Pricing Plans</h2>
-    <div class="pricing-wrapper">
-      <div class="package-card" data-aos="fade-up">
-        <div class="card-badge" color="#ffffff">For only one project</div>
-        <div>
-          <h3>One Creation</h3>
-          <div class="price">LKR 500+</div>
-          <ul class="feature-list">
-            <li> Resume, Cards, Cover Letters</li>
-            <li>Logo to All Business Designs</li>
-            <li>Social Media Posts, All Assests</li>
-            <li>Flyers, Posters and all prints</li>
-            <li>Video Edits,Ads, and more...</li>
-            <li>All Animations, Motion Graphics</li>
-            <li>Simple to Pro Level Web Design</li>
-            <li>Price Depend on Each Project</li>
-          </ul>
-        </div>
-        <a class="btn-start" href="https://wa.me/94773226376">Contact Us</a>
-      </div>
-      
-      <div class="package-card" data-aos="fade-up" style="border: 2px solid #ff2d55;">
-        <div class="card-badge">Monthly Pack</div>
-        <div>
-          <h3 style="color:#ff2d55;">Budget Plan</h3>
-          <div class="price">LKR 5000</div>
-          <ul class="feature-list">
-            <li>5 Posts or Videos</li>
-            <li>Brand Profile Setup</li>
-            <li>High Quality Unique Designs</li>
-            <li>SEO Optimized Captions</li>
-            <li>Strategic Hashtag Setup</li>
-            <li>Targeted Keywords Research</li>
-            <li>Analytics and Reports </li>
-            <li>Secret Principles added</li>
-            <li>24/7 Customer Support</li>
-          </ul>
-        </div>
-        <a class="btn-main" href="https://wa.me/94773226376">Start</a>
-      </div>
-      
-      <div class="package-card" data-aos="fade-up">
-        <div class="card-badge">Monthly Pack</div>
-        <div>
-          <h3>Business</h3>
-          <div class="price">LKR 12,000</div>
-          <ul class="feature-list">
-            <li>15 Posts or Videos</li>
-            <li>Advanced Brand Profile Setup</li>
-            <li>High Quality Unique Designs</li>
-            <li>Strategic Hashtag Setup</li>
-            <li>SEO Optimized Captions</li>
-            <li>Targeted Keywords Research</li>
-            <li>Deep  analytics and Reports </li>
-            <li>Paid Ads and Promote</li>
-            <li>24/7 Customer Support</li>
-          </ul>
-        </div>
-        <a class="btn-start" href="https://wa.me/94773226376">Start</a>
-      </div>
-      
-      <div class="package-card" data-aos="fade-up">
-        <div class="card-badge">fully customizable</div>
-        <div>
-          <h3>Enterprise</h3>
-          <div class="price">Custom</div>
-          <ul class="feature-list">
-            <li>Upto 30 Posts or Videos</li>
-            <li>Pro Business Profile Setup</li>
-            <li>Premium Unique Designs</li>
-            <li>Advanced Strategic Hashtags</li>
-            <li>SEO Optimized Captions</li>
-            <li>Targeted Keyword Research</li>
-            <li>Deep analytics and Reports </li>
-            <li>Paid Ads and Promote</li>
-            <li>24/7 Customer Support</li>
-          </ul>
-        </div>
-        <a class="btn-start" href="https://wa.me/94773226376">Start</a>
-      </div>
-    </div>
+        <div class="cards-grid">
+          <article class="glass-card reveal">
+            <div class="card-icon">✦</div>
+            <h3>Brand Identity</h3>
+            <p>Premium logos, brand systems, and visual direction that make your business look established.</p>
+          </article>
 
-    <h2 class="section-title" data-aos="fade-up" id="contact">24/7 Contact Methods</h2>
-    <section class="contact-section" data-aos="fade-up">
-      <div class="success-overlay" id="successMsg">
-        <h3>✨ Sent Successfully!</h3>
-        <p>Thanks for reaching out! I'll get back to you within 24 hours.</p>
-        <br/>
-        <button class="btn-start" onclick="document.getElementById('successMsg').style.display='none'">Send Another</button>
-      </div>
-      <div class="contact-info">
-        <h2>Feel FREE to Ask Anything!</h2>
-        <p>Ask Any Question through Any Platform in Any Language. වැඩිදුර තොරතුරු සදහා ඕනෑම භාෂාවකින් අප හා සම්බන්ධ වන්න. ☺</p>
-        <div class="social-links">
-          <a class="wa-tag" href="https://wa.me/94773226376" target="_blank">WhatsApp</a>
-          <a class="fb-tag" href="https://web.facebook.com/idilshnetwork/">Facebook</a>
-          <a class="yt-tag" href="https://www.youtube.com/@IdilshNetwork">YouTube</a>
-          <a class="tt-tag" href="https://www.tiktok.com/@idilshnet">TikTok</a>
+          <article class="glass-card reveal">
+            <div class="card-icon">⌁</div>
+            <h3>Web Design</h3>
+            <p>Responsive, fast-loading websites with modern UI, strong structure, and conversion-focused layout.</p>
+          </article>
+
+          <article class="glass-card reveal">
+            <div class="card-icon">◌</div>
+            <h3>Video & Animation</h3>
+            <p>Motion graphics, explainers, reels, ads, and visual storytelling that grabs attention quickly.</p>
+          </article>
+
+          <article class="glass-card reveal">
+            <div class="card-icon">AI</div>
+            <h3>AI Creative Assets</h3>
+            <p>Smart AI-powered visuals and content workflows for faster creative production and fresh ideas.</p>
+          </article>
+
+          <article class="glass-card reveal">
+            <div class="card-icon">✺</div>
+            <h3>Social Media</h3>
+            <p>Content design, post systems, and brand consistency to help your pages look professional and active.</p>
+          </article>
+
+          <article class="glass-card reveal">
+            <div class="card-icon">↗</div>
+            <h3>SEO-Friendly Setup</h3>
+            <p>Clean structure, proper metadata, and best-practice layout for better visibility on search engines.</p>
+          </article>
         </div>
       </div>
-      <form action="https://api.web3forms.com/submit" class="contact-form" id="mainForm" method="POST">
-        <input name="access_key" type="hidden" value="f9241ce6-c690-4811-9d61-0b031ac2a146"/>
-        <input name="name" placeholder="Your Name" required="required" type="text"/>
-        <input name="email" placeholder="Your Email" required="required" type="email"/>
-        <textarea name="message" placeholder="Project Details" required="required" rows="5"></textarea>
-        <input name="subject" type="hidden" value="New Portfolio Inquiry"/>
-        <button class="btn-main" id="submitBtn" type="submit">Send Message to hi@iDilsh.Top </button>
-      </form>
     </section>
-  </div>
 
-  <footer> ©2026 Made with ❤️ iDilsh Network - Sri Lanka</footer>
+    <section class="section" id="work">
+      <div class="container">
+        <div class="section-head reveal">
+          <p class="section-label">Selected Work</p>
+          <h2>Showcase your best work like a premium studio.</h2>
+        </div>
 
-  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-  <script>
-    AOS.init({ duration: 1000, once: true, offset: 50 });
-    
-    const follower = document.getElementById('follower');
-    let posX = 0, posY = 0, mouseX = 0, mouseY = 0;
-    
-    document.addEventListener('mousemove', (e) => { 
-      mouseX = e.clientX; 
-      mouseY = e.clientY; 
-    });
-    
-    function animate() {
-      posX += (mouseX - posX) / 6; 
-      posY += (mouseY - posY) / 6;
-      follower.style.left = (posX - 10) + 'px'; 
-      follower.style.top = (posY - 10) + 'px';
-      requestAnimationFrame(animate);
-    }
-    animate();
-    
-    const hoverElements = 'a, .portfolio-card, .btn-main, .btn-start, .package-card, .about-section, input, textarea, .social-tag';
-    document.querySelectorAll(hoverElements).forEach(el => {
-      el.addEventListener('mouseenter', () => follower.style.transform = 'scale(2.5)');
-      el.addEventListener('mouseleave', () => follower.style.transform = 'scale(1)');
-    });
-  </script>
+        <div class="portfolio-grid">
+          <article class="portfolio-card reveal">
+            <div class="portfolio-thumb thumb-1"></div>
+            <div class="portfolio-body">
+              <h3>Luxury Brand Launch</h3>
+              <p>Identity design, launch graphics, and social media visuals.</p>
+            </div>
+          </article>
+
+          <article class="portfolio-card reveal">
+            <div class="portfolio-thumb thumb-2"></div>
+            <div class="portfolio-body">
+              <h3>Agency Website UI</h3>
+              <p>High-end homepage concept with glassmorphism and motion.</p>
+            </div>
+          </article>
+
+          <article class="portfolio-card reveal">
+            <div class="portfolio-thumb thumb-3"></div>
+            <div class="portfolio-body">
+              <h3>Product Promo Video</h3>
+              <p>Short-form ad content with clean motion and strong CTA.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="process">
+      <div class="container">
+        <div class="section-head reveal">
+          <p class="section-label">Process</p>
+          <h2>A clear workflow that keeps projects smooth and professional.</h2>
+        </div>
+
+        <div class="process-list">
+          <div class="process-item reveal">
+            <div class="process-num">01</div>
+            <div>
+              <h3>Discovery</h3>
+              <p>We understand your goals, audience, brand style, and project scope.</p>
+            </div>
+          </div>
+
+          <div class="process-item reveal">
+            <div class="process-num">02</div>
+            <div>
+              <h3>Strategy & Concept</h3>
+              <p>We map the creative direction and build a strong visual plan before design starts.</p>
+            </div>
+          </div>
+
+          <div class="process-item reveal">
+            <div class="process-num">03</div>
+            <div>
+              <h3>Design & Build</h3>
+              <p>We create the visuals, refine the details, and shape the final experience.</p>
+            </div>
+          </div>
+
+          <div class="process-item reveal">
+            <div class="process-num">04</div>
+            <div>
+              <h3>Delivery & Support</h3>
+              <p>We hand over polished files and make sure everything is ready to use.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="testimonials">
+      <div class="container">
+        <div class="section-head reveal">
+          <p class="section-label">Testimonials</p>
+          <h2>Trust is everything in agency work.</h2>
+        </div>
+
+        <div class="testimonials-grid">
+          <blockquote class="glass-card reveal">
+            <p>“Clean, modern, and very professional. The brand looked instantly more premium.”</p>
+            <footer>— Startup Founder</footer>
+          </blockquote>
+
+          <blockquote class="glass-card reveal">
+            <p>“The website design and visuals made our business feel much stronger online.”</p>
+            <footer>— Small Business Owner</footer>
+          </blockquote>
+
+          <blockquote class="glass-card reveal">
+            <p>“Fast communication, great creativity, and a proper agency-level finish.”</p>
+            <footer>— Content Creator</footer>
+          </blockquote>
+        </div>
+      </div>
+    </section>
+
+    <section class="section cta-section" id="contact">
+      <div class="container">
+        <div class="cta-box glass-panel reveal">
+          <div>
+            <p class="section-label">Contact</p>
+            <h2>Ready to build something premium?</h2>
+            <p>Let’s create a website, brand, or content system that makes your business stand out.</p>
+          </div>
+
+          <form class="contact-form">
+            <input type="text" placeholder="Your Name" />
+            <input type="email" placeholder="Email Address" />
+            <textarea rows="4" placeholder="Tell us about your project"></textarea>
+            <button type="submit" class="btn btn-primary">Send Inquiry</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-wrap">
+      <div>
+        <h3>iDilsh Network</h3>
+        <p>Creative digital agency for design, video, web, and AI-powered content.</p>
+      </div>
+      <p>© 2026 iDilsh Network. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
