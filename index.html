@@ -3,115 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iDilsh Network | Global Creative Agency</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <title>iDilsh Network | Design & Motion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
+            --apple-black: #1d1d1f;
+            --apple-grey: #86868b;
+            --apple-link: #0066cc;
             --primary: #5d1cf1;
             --secondary: #ff14d5;
-            --accent: #00f2ff;
-            --glass: rgba(255, 255, 255, 0.7);
-            --text: #0f172a;
-            --text-light: #64748b;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
         
-        body {
-            background: #ffffff;
-            color: var(--text);
-            overflow-x: hidden;
-            min-height: 100vh;
-        }
+        body { background: #ffffff; color: var(--apple-black); overflow-x: hidden; }
 
-        /* Background Animated Bubbles */
+        /* The Background You Liked */
         #bg-canvas {
             position: fixed;
             top: 0; left: 0;
             z-index: -1;
-            filter: blur(80px);
-            opacity: 0.6;
+            filter: blur(90px);
+            opacity: 0.45;
         }
 
-        /* Navigation */
+        /* Apple-Style Nav */
         nav {
             position: fixed;
             top: 0; width: 100%;
-            padding: 25px 0;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: saturate(180%) blur(20px);
             z-index: 1000;
-            transition: 0.4s;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: center;
         }
         .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 1000px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 30px;
-            background: var(--glass);
-            backdrop-filter: blur(15px);
-            border-radius: 50px;
-            border: 1px solid rgba(255,255,255,0.3);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            padding: 0 22px;
         }
-        .logo { font-size: 22px; font-weight: 800; text-decoration: none; color: var(--text); }
-        .nav-links { display: flex; gap: 30px; }
-        .nav-links a { 
-            text-decoration: none; color: var(--text); font-weight: 600; font-size: 0.9rem;
-            transition: 0.3s; cursor: pointer;
-        }
-        .nav-links a:hover { color: var(--primary); }
-
-        /* Page Transitions */
-        .page {
-            display: none;
-            padding: 150px 20px 100px;
-            max-width: 1200px;
-            margin: 0 auto;
-            animation: fadeIn 0.8s ease forwards;
-        }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Typography */
-        .highlight { background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        h1 { font-size: 4.5rem; line-height: 1.1; margin-bottom: 20px; letter-spacing: -2px; }
-        p.lead { font-size: 1.25rem; color: var(--text-light); margin-bottom: 40px; max-width: 600px; }
-
-        /* Cards & Components */
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 50px; }
-        .glass-card {
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            padding: 40px;
-            border-radius: 30px;
-            border: 1px solid rgba(255,255,255,0.5);
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .glass-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(93, 28, 241, 0.1); border-color: var(--primary); }
-        
-        .btn {
-            padding: 15px 35px;
-            background: var(--primary);
-            color: white;
-            border-radius: 50px;
+        .logo { font-weight: 600; font-size: 19px; cursor: pointer; color: var(--apple-black); text-decoration: none; }
+        .nav-links a {
+            font-size: 12px;
+            color: var(--apple-black);
             text-decoration: none;
-            font-weight: 600;
-            display: inline-block;
-            box-shadow: 0 10px 20px rgba(93, 28, 241, 0.3);
-            transition: 0.3s;
+            margin-left: 30px;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+            cursor: pointer;
         }
-        .btn:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(93, 28, 241, 0.4); }
+        .nav-links a:hover { opacity: 1; }
 
-        /* Portfolio Specific */
-        .work-item { height: 400px; background: #eee; border-radius: 20px; overflow: hidden; position: relative; }
-        .work-overlay { 
-            position: absolute; bottom: 0; width: 100%; padding: 30px; 
-            background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white;
+        /* Global Sections */
+        section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 20px;
         }
 
-        /* Footer */
-        footer { text-align: center; padding: 50px; color: var(--text-light); font-size: 0.9rem; }
+        /* Hero / Headline Style */
+        .hero-title {
+            font-size: clamp(40px, 8vw, 80px);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 10px;
+        }
+        .hero-subtitle {
+            font-size: clamp(20px, 4vw, 28px);
+            font-weight: 500;
+            color: var(--apple-grey);
+            margin-bottom: 30px;
+        }
+        .cta-links a {
+            color: var(--apple-link);
+            text-decoration: none;
+            font-size: 21px;
+            margin: 0 15px;
+            transition: underline 0.3s;
+        }
+        .cta-links a:hover { text-decoration: underline; }
+
+        /* Grid for Services / Details */
+        .apple-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 15px auto;
+        }
+        .grid-item {
+            background: rgba(245, 245, 247, 0.6);
+            padding: 60px 40px;
+            border-radius: 0px; /* Sharp Apple edges or slight rounding */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .grid-item h3 { font-size: 32px; margin-bottom: 10px; }
+        .grid-item p { color: var(--apple-grey); font-size: 19px; max-width: 300px; }
+
+        /* Animations */
+        .fade-in {
+            animation: appleFade 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes appleFade {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        footer {
+            background: #f5f5f7;
+            padding: 60px 20px;
+            font-size: 12px;
+            color: var(--apple-grey);
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -120,88 +137,59 @@
 
     <nav>
         <div class="nav-container">
-            <a onclick="showPage('home')" class="logo">iDilsh <span class="highlight">Network</span></a>
+            <a href="#" class="logo">iDilsh Network</a>
             <div class="nav-links">
-                <a onclick="showPage('home')">Home</a>
-                <a onclick="showPage('about')">Our Story</a>
-                <a onclick="showPage('services')">Expertise</a>
-                <a onclick="showPage('work')">Portfolio</a>
-                <a onclick="showPage('contact')">Contact</a>
+                <a href="#about">About</a>
+                <a href="#services">Services</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#contact">Contact</a>
             </div>
         </div>
     </nav>
 
-    <div id="home" class="page active">
-        <span style="font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 2px;">Global Creative Agency</span>
-        <h1>Igniting Designs,<br><span class="highlight">Illuminating Dreams.</span></h1>
-        <p class="lead">Transforming Sri Lankan innovation into global digital excellence through motion, code, and AI strategy.</p>
-        <div class="hero-btns">
-            <a onclick="showPage('work')" class="btn">Explore Work</a>
-            <a onclick="showPage('contact')" style="margin-left: 20px; cursor: pointer; color: var(--text); font-weight: 700;">Get a Quote →</a>
+    <section id="hero" class="fade-in">
+        <h1 class="hero-title">iDilsh Network.</h1>
+        <h2 class="hero-subtitle">Ignite designs. Illuminate dreams.</h2>
+        <div class="cta-links">
+            <a href="#contact">Learn more ></a>
+            <a href="#services">Buy services ></a>
+        </div>
+    </section>
+
+    <div class="apple-grid">
+        <div class="grid-item">
+            <h3>Motion Graphics.</h3>
+            <p>3+ years of After Effects mastery for your brand.</p>
+        </div>
+        <div class="grid-item">
+            <h3>Web Design.</h3>
+            <p>Clean, functional, and global-ready sites.</p>
         </div>
     </div>
 
-    <div id="about" class="page">
-        <h2 class="highlight" style="font-size: 3rem;">Our Story</h2>
-        <div class="grid">
-            <div class="glass-card">
-                <h3>The Mission</h3>
-                <p>Based in Sri Lanka as an emerging start-up, we've delivered over 18+ global projects. We focus on turning small brands into digital giants using high-impact design.</p>
+    <section id="pricing">
+        <h2 class="hero-title" style="font-size: 48px;">Choose your plan.</h2>
+        <p class="hero-subtitle">Simple. Transparent. Professional.</p>
+        <div class="apple-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+            <div class="grid-item">
+                <span style="color: #bf4800; font-weight: 600;">Budget</span>
+                <h4>LKR 5,000</h4>
+                <p>5 Posts. Full SEO. 24/7 Support.</p>
             </div>
-            <div class="glass-card">
-                <h3>Our DNA</h3>
-                <p>We blend 5+ years of experience in After Effects, Web Tech, and Social strategy to create "Magical Digital Experiences."</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="services" class="page">
-        <h2 style="font-size: 3rem;">Creative <span class="highlight">Expertise</span></h2>
-        <div class="grid">
-            <div class="glass-card"><h3>🎨 Brand Design</h3><p>Premium logos and visual identities that stand out in the international market.</p></div>
-            <div class="glass-card"><h3>🎬 Motion Graphics</h3><p>Professional video editing and 3D animations using 3+ years of After Effects mastery.</p></div>
-            <div class="glass-card"><h3>✨ AI Solutions</h3><p>Cutting-edge AI graphics and video ads with full commercial rights.</p></div>
-            <div class="glass-card"><h3>💻 Web Design</h3><p>High-performance landing pages and E-commerce hubs optimized for conversion.</p></div>
-        </div>
-    </div>
-
-    <div id="work" class="page">
-        <h2 style="font-size: 3rem;">Recent <span class="highlight">Showcase</span></h2>
-        <div class="grid">
-            <div class="work-item" style="background: linear-gradient(45deg, #5d1cf1, #00f2ff);">
-                <div class="work-overlay"><h4>Tech Start-up Identity</h4><p>Branding & Web</p></div>
-            </div>
-            <div class="work-item" style="background: linear-gradient(45deg, #ff14d5, #5d1cf1);">
-                <div class="work-overlay"><h4>Motion Ad Campaign</h4><p>After Effects / 3D</p></div>
+            <div class="grid-item">
+                <span style="color: #bf4800; font-weight: 600;">Business</span>
+                <h4>LKR 12,000</h4>
+                <p>15 Posts. Paid Ads. Deep Analytics.</p>
             </div>
         </div>
-    </div>
-
-    <div id="contact" class="page">
-        <div class="glass-card" style="max-width: 600px; margin: 0 auto; text-align: center;">
-            <h2 class="highlight">Let's Connect</h2>
-            <p>Ready to take your brand to the next level? Reach out to us 24/7.</p>
-            <br>
-            <p><strong>WhatsApp:</strong> +94 Direct Link</p>
-            <p><strong>Email:</strong> hi@idilsh.top</p>
-            <br>
-            <a href="mailto:hi@idilsh.top" class="btn">Send a Message</a>
-        </div>
-    </div>
+    </section>
 
     <footer>
-        <p>&copy; 2026 iDilsh Network. Proudly Sri Lankan. Globally Minded.</p>
+        <p>Copyright © 2026 iDilsh Network Agency. Sri Lanka.</p>
     </footer>
 
     <script>
-        // Smooth Page Switching Logic
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // Glowing Background Bubbles Script
+        // BACKGROUND EFFECT
         const canvas = document.getElementById('bg-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -211,14 +199,14 @@
             canvas.height = window.innerHeight;
         }
 
-        class Particle {
+        class Bubble {
             constructor() {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 200 + 100;
+                this.size = Math.random() * 250 + 150;
                 this.color = Math.random() > 0.5 ? '#5d1cf1' : '#ff14d5';
-                this.speedX = Math.random() * 1 - 0.5;
-                this.speedY = Math.random() * 1 - 0.5;
+                this.speedX = Math.random() * 0.6 - 0.3;
+                this.speedY = Math.random() * 0.6 - 0.3;
             }
             update() {
                 this.x += this.speedX;
@@ -244,8 +232,18 @@
 
         window.addEventListener('resize', initCanvas);
         initCanvas();
-        for(let i=0; i<8; i++) particles.push(new Particle());
+        for(let i=0; i<6; i++) particles.push(new Bubble());
         animate();
+
+        // SMOOTH SCROLL
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
     </script>
 </body>
 </html>
