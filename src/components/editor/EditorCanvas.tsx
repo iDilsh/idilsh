@@ -1036,6 +1036,8 @@ export default function EditorCanvas() {
         case 'l': useEditorStore.getState().setActiveTool('line'); break;
         case 'c': useEditorStore.getState().setActiveTool('crop'); break;
         case 'p': useEditorStore.getState().setActiveTool('pen'); break;
+        case 'w': useEditorStore.getState().setActiveTool('magic-wand'); break;
+        case 's': useEditorStore.getState().setActiveTool('clone-stamp'); break;
         case 'x': useEditorStore.getState().swapColors(); break;
         case '[': {
           // FIX 6: Decrease brush/eraser size with [ key
@@ -1375,39 +1377,104 @@ export default function EditorCanvas() {
       return;
     }
 
-    // FIX 3: Fill tool - stays active after filling
+    // Fill tool - renders only layer content (no background) for proper flood fill
     if (activeTool === 'fill') {
       if (!activeLayerId) return;
       const stage = stageRef.current;
       if (!stage) return;
       try {
-        const pixelRatio = 1;
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width * pixelRatio;
-        tempCanvas.height = canvas.height * pixelRatio;
-        const ctx = tempCanvas.getContext('2d');
-        if (ctx) {
-          const stageCanvas = stage.toCanvas({ pixelRatio });
-          ctx.drawImage(stageCanvas, 0, 0);
-          const startX = Math.round(pos.x * pixelRatio);
-          const startY = Math.round(pos.y * pixelRatio);
-          if (startX >= 0 && startX < tempCanvas.width && startY >= 0 && startY < tempCanvas.height) {
-            const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        // Render only visible layer objects to a temp canvas (no background, no checkerboard)
+        const renderCanvas = document.createElement('canvas');
+        renderCanvas.width = canvas.width;
+        renderCanvas.height = canvas.height;
+        const renderCtx = renderCanvas.getContext('2d');
+        if (renderCtx) {
+          // Draw white background as the "canvas" color (like Photoshop)
+          renderCtx.fillStyle = '#ffffff';
+          renderCtx.fillRect(0, 0, canvas.width, canvas.height);
+          // Render each visible layer's objects using the stage but with only content layers
+          // Use stage.toCanvas but crop to canvas dimensions, ignoring UI overlays
+          const stageCanvas = stage.toCanvas({ pixelRatio: 1 });
+          // Extract only the canvas area from the stage render
+          renderCtx.drawImage(
+            stageCanvas,
+            canvas.offsetX, canvas.offsetY, canvas.width * canvas.zoom, canvas.height * canvas.zoom,
+            0, 0, canvas.width, canvas.height
+          );
+          
+          const startX = Math.round(pos.x);
+          const startY = Math.round(pos.y);
+          if (startX >= 0 && startX < renderCanvas.width && startY >= 0 && startY < renderCanvas.height) {
+            const imageData = renderCtx.getImageData(0, 0, renderCanvas.width, renderCanvas.height);
             const fillRgba = hexToRgba(foregroundColor);
             const filled = floodFill(imageData, startX, startY, fillRgba, fillTolerance);
-            ctx.putImageData(filled, 0, 0);
-            const imgDataUrl = tempCanvas.toDataURL('image/png');
-            const fillObj: EditorObject = {
-              id: uuidv4(), type: 'image', x: 0, y: 0,
-              width: canvas.width, height: canvas.height,
-              imageSrc: imgDataUrl, opacity: 100,
-            };
-            addObjectToLayer(activeLayerId, fillObj);
-            pushHistory('Flood Fill');
+            renderCtx.putImageData(filled, 0, 0);
+            
+            // Find the bounding box of changed pixels to create a minimal image
+            const filledData = filled.data;
+            const origData = imageData.data;
+            let minFX = canvas.width, minFY = canvas.height, maxFX = 0, maxFY = 0;
+            let hasChanges = false;
+            for (let y = 0; y < canvas.height; y++) {
+              for (let x = 0; x < canvas.width; x++) {
+                const idx = (y * canvas.width + x) * 4;
+                if (filledData[idx] !== origData[idx] || filledData[idx+1] !== origData[idx+1] || 
+                    filledData[idx+2] !== origData[idx+2] || filledData[idx+3] !== origData[idx+3]) {
+                  if (x < minFX) minFX = x;
+                  if (y < minFY) minFY = y;
+                  if (x > maxFX) maxFX = x;
+                  if (y > maxFY) maxFY = y;
+                  hasChanges = true;
+                }
+              }
+            }
+            
+            if (hasChanges) {
+              // Add small padding
+              minFX = Math.max(0, minFX - 1);
+              minFY = Math.max(0, minFY - 1);
+              maxFX = Math.min(canvas.width - 1, maxFX + 1);
+              maxFY = Math.min(canvas.height - 1, maxFY + 1);
+              const cropW = maxFX - minFX + 1;
+              const cropH = maxFY - minFY + 1;
+              
+              // Create a minimal image with only the filled area
+              const cropCanvas = document.createElement('canvas');
+              cropCanvas.width = cropW;
+              cropCanvas.height = cropH;
+              const cropCtx = cropCanvas.getContext('2d')!;
+              // Extract only changed pixels with transparency for unchanged areas
+              const cropImageData = cropCtx.createImageData(cropW, cropH);
+              for (let cy = 0; cy < cropH; cy++) {
+                for (let cx = 0; cx < cropW; cx++) {
+                  const srcIdx = ((minFY + cy) * canvas.width + (minFX + cx)) * 4;
+                  const dstIdx = (cy * cropW + cx) * 4;
+                  // Only include pixels that were actually changed by the fill
+                  if (filledData[srcIdx] !== origData[srcIdx] || filledData[srcIdx+1] !== origData[srcIdx+1] || 
+                      filledData[srcIdx+2] !== origData[srcIdx+2] || filledData[srcIdx+3] !== origData[srcIdx+3]) {
+                    cropImageData.data[dstIdx] = filledData[srcIdx];
+                    cropImageData.data[dstIdx+1] = filledData[srcIdx+1];
+                    cropImageData.data[dstIdx+2] = filledData[srcIdx+2];
+                    cropImageData.data[dstIdx+3] = filledData[srcIdx+3];
+                  } else {
+                    // Transparent for unchanged areas
+                    cropImageData.data[dstIdx+3] = 0;
+                  }
+                }
+              }
+              cropCtx.putImageData(cropImageData, 0, 0);
+              
+              const fillObj: EditorObject = {
+                id: uuidv4(), type: 'image', x: minFX, y: minFY,
+                width: cropW, height: cropH,
+                imageSrc: cropCanvas.toDataURL('image/png'), opacity: 100,
+              };
+              addObjectToLayer(activeLayerId, fillObj);
+              pushHistory('Flood Fill');
+            }
           }
         }
       } catch { /* cross-origin */ }
-      // FIX 3: Don't switch to select tool - stay on fill
       return;
     }
 
@@ -1481,15 +1548,23 @@ export default function EditorCanvas() {
       const stage = stageRef.current;
       if (!stage) return;
       try {
-        const pixelRatio = 1;
         const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width * pixelRatio;
-        tempCanvas.height = canvas.height * pixelRatio;
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
         const ctx = tempCanvas.getContext('2d');
         if (ctx) {
-          const stageCanvas = stage.toCanvas({ pixelRatio });
-          ctx.drawImage(stageCanvas, 0, 0);
-          const imageData = ctx.getImageData(Math.round(pos.x * pixelRatio), Math.round(pos.y * pixelRatio), 1, 1);
+          // Render with white background like the actual canvas
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          const stageCanvas = stage.toCanvas({ pixelRatio: 1 });
+          ctx.drawImage(
+            stageCanvas,
+            canvas.offsetX, canvas.offsetY, canvas.width * canvas.zoom, canvas.height * canvas.zoom,
+            0, 0, canvas.width, canvas.height
+          );
+          const pickX = Math.max(0, Math.min(canvas.width - 1, Math.round(pos.x)));
+          const pickY = Math.max(0, Math.min(canvas.height - 1, Math.round(pos.y)));
+          const imageData = ctx.getImageData(pickX, pickY, 1, 1);
           const [r, g, b] = imageData.data;
           const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
           useEditorStore.getState().setForegroundColor(hex);

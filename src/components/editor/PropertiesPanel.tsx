@@ -15,6 +15,56 @@ import { Settings2 } from 'lucide-react';
 import { useCallback } from 'react';
 import ScrubbySlider from './ScrubbySlider';
 
+// Reusable row for a property with label, scrubby value, and optional input
+function PropertyRow({ 
+  label, 
+  value, 
+  onChange, 
+  min = 0, 
+  max = 9999, 
+  step = 1, 
+  suffix = '',
+  showInput = true,
+  inputWidth = 'w-16',
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  suffix?: string;
+  showInput?: boolean;
+  inputWidth?: string;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <ScrubbySlider
+        value={value}
+        onChange={onChange}
+        min={min}
+        max={max}
+        step={step}
+        suffix={suffix}
+        asLabel
+        label={label}
+        className="text-[10px] text-zinc-500 min-w-[16px]"
+      />
+      {showInput && (
+        <Input
+          type="number"
+          min={min}
+          max={max}
+          step={step}
+          value={Math.round(value)}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className={`h-5 text-[11px] bg-zinc-800 border-zinc-700 text-zinc-300 ${inputWidth}`}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function PropertiesPanel() {
   const layers = useEditorStore((s) => s.layers);
   const activeLayerId = useEditorStore((s) => s.activeLayerId);
@@ -77,24 +127,8 @@ export default function PropertiesPanel() {
         <div>
           <span className="text-[10px] text-zinc-500 uppercase tracking-wide">Position</span>
           <div className="grid grid-cols-2 gap-2 mt-1">
-            <div>
-              <label className="text-[10px] text-zinc-500">X</label>
-              <Input
-                type="number"
-                value={Math.round(obj.x)}
-                onChange={(e) => handleUpdateObject(obj.id, { x: Number(e.target.value) })}
-                className="h-6 text-xs bg-zinc-800 border-zinc-700 text-zinc-300"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-zinc-500">Y</label>
-              <Input
-                type="number"
-                value={Math.round(obj.y)}
-                onChange={(e) => handleUpdateObject(obj.id, { y: Number(e.target.value) })}
-                className="h-6 text-xs bg-zinc-800 border-zinc-700 text-zinc-300"
-              />
-            </div>
+            <PropertyRow label="X:" value={Math.round(obj.x)} onChange={(v) => handleUpdateObject(obj.id, { x: v })} inputWidth="w-14" />
+            <PropertyRow label="Y:" value={Math.round(obj.y)} onChange={(v) => handleUpdateObject(obj.id, { y: v })} inputWidth="w-14" />
           </div>
         </div>
 
@@ -103,24 +137,8 @@ export default function PropertiesPanel() {
           <div>
             <span className="text-[10px] text-zinc-500 uppercase tracking-wide">Size</span>
             <div className="grid grid-cols-2 gap-2 mt-1">
-              <div>
-                <label className="text-[10px] text-zinc-500">W</label>
-                <Input
-                  type="number"
-                  value={Math.round(obj.width || 0)}
-                  onChange={(e) => handleUpdateObject(obj.id, { width: Number(e.target.value) })}
-                  className="h-6 text-xs bg-zinc-800 border-zinc-700 text-zinc-300"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-zinc-500">H</label>
-                <Input
-                  type="number"
-                  value={Math.round(obj.height || 0)}
-                  onChange={(e) => handleUpdateObject(obj.id, { height: Number(e.target.value) })}
-                  className="h-6 text-xs bg-zinc-800 border-zinc-700 text-zinc-300"
-                />
-              </div>
+              <PropertyRow label="W:" value={Math.round(obj.width || 0)} onChange={(v) => handleUpdateObject(obj.id, { width: v })} min={1} inputWidth="w-14" />
+              <PropertyRow label="H:" value={Math.round(obj.height || 0)} onChange={(v) => handleUpdateObject(obj.id, { height: v })} min={1} inputWidth="w-14" />
             </div>
           </div>
         )}
@@ -128,15 +146,7 @@ export default function PropertiesPanel() {
         {/* Rotation */}
         <div>
           <span className="text-[10px] text-zinc-500 uppercase tracking-wide">Rotation</span>
-          <div className="flex items-center gap-2 mt-1">
-            <Input
-              type="number"
-              value={Math.round(obj.rotation || 0)}
-              onChange={(e) => handleUpdateObject(obj.id, { rotation: Number(e.target.value) })}
-              className="h-6 text-xs bg-zinc-800 border-zinc-700 text-zinc-300 w-20"
-            />
-            <span className="text-[10px] text-zinc-500">deg</span>
-          </div>
+          <PropertyRow label="" value={Math.round(obj.rotation || 0)} onChange={(v) => handleUpdateObject(obj.id, { rotation: v })} min={-360} max={360} suffix="°" inputWidth="w-16" />
         </div>
 
         {/* Gradient Properties */}
@@ -255,22 +265,24 @@ export default function PropertiesPanel() {
               />
             </div>
             <div className="mt-1">
-              <label className="text-[10px] text-zinc-500">Width</label>
-              <Input
-                type="number"
-                min={0}
-                value={obj.strokeWidth || 0}
-                onChange={(e) => handleUpdateObject(obj.id, { strokeWidth: Number(e.target.value) })}
-                className="h-6 text-xs bg-zinc-800 border-zinc-700 text-zinc-300 w-20"
-              />
+              <PropertyRow label="Width:" value={obj.strokeWidth || 0} onChange={(v) => handleUpdateObject(obj.id, { strokeWidth: v })} min={0} max={100} inputWidth="w-14" />
             </div>
           </div>
         )}
 
         {/* Opacity */}
         <div>
-          <span className="text-[10px] text-zinc-500 uppercase tracking-wide">Opacity</span>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2">
+            <ScrubbySlider
+              value={obj.opacity ?? 100}
+              onChange={(v) => handleUpdateObject(obj.id, { opacity: v })}
+              min={0}
+              max={100}
+              step={1}
+              asLabel
+              label="Opacity"
+              className="text-[10px] text-zinc-500 uppercase tracking-wide"
+            />
             <Slider
               min={0}
               max={100}
@@ -295,13 +307,7 @@ export default function PropertiesPanel() {
         {obj.type === 'rect' && (
           <div>
             <span className="text-[10px] text-zinc-500 uppercase tracking-wide">Corner Radius</span>
-            <Input
-              type="number"
-              min={0}
-              value={obj.cornerRadius || 0}
-              onChange={(e) => handleUpdateObject(obj.id, { cornerRadius: Number(e.target.value) })}
-              className="h-6 text-xs bg-zinc-800 border-zinc-700 text-zinc-300 w-20 mt-1"
-            />
+            <PropertyRow label="" value={obj.cornerRadius || 0} onChange={(v) => handleUpdateObject(obj.id, { cornerRadius: v })} min={0} max={500} inputWidth="w-16" />
           </div>
         )}
 
@@ -317,26 +323,15 @@ export default function PropertiesPanel() {
               />
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] text-zinc-500">Size</label>
-                  <div className="flex items-center gap-1">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={500}
-                      value={obj.fontSize || 24}
-                      onChange={(e) => handleUpdateObject(obj.id, { fontSize: Number(e.target.value) })}
-                      className="h-6 text-xs bg-zinc-800 border-zinc-700 text-zinc-300 w-16"
-                    />
-                    <ScrubbySlider
-                      value={obj.fontSize || 24}
-                      onChange={(v) => handleUpdateObject(obj.id, { fontSize: v })}
-                      min={1}
-                      max={500}
-                      step={1}
-                      suffix="px"
-                      className="text-[10px] text-zinc-400"
-                    />
-                  </div>
+                  <PropertyRow 
+                    label="Size:" 
+                    value={obj.fontSize || 24} 
+                    onChange={(v) => handleUpdateObject(obj.id, { fontSize: v })} 
+                    min={1} 
+                    max={500}
+                    suffix="px"
+                    inputWidth="w-14" 
+                  />
                 </div>
                 <div>
                   <label className="text-[10px] text-zinc-500">Font</label>
@@ -406,26 +401,37 @@ export default function PropertiesPanel() {
         {obj.type === 'brush-stroke' && (
           <div>
             <span className="text-[10px] text-zinc-500 uppercase tracking-wide">Brush</span>
-            <div className="mt-1">
-              <label className="text-[10px] text-zinc-500">Color</label>
-              <div className="flex items-center gap-2 mt-0.5">
-                <div className="w-6 h-6 rounded border border-zinc-600 overflow-hidden flex-shrink-0">
-                  <input
-                    type="color"
+            <div className="space-y-1 mt-1">
+              <PropertyRow 
+                label="Size:" 
+                value={obj.brushSize || 5} 
+                onChange={(v) => handleUpdateObject(obj.id, { brushSize: v })} 
+                min={1} 
+                max={500}
+                suffix="px"
+                inputWidth="w-14" 
+              />
+              <div className="mt-1">
+                <label className="text-[10px] text-zinc-500">Color</label>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <div className="w-6 h-6 rounded border border-zinc-600 overflow-hidden flex-shrink-0">
+                    <input
+                      type="color"
+                      value={obj.brushColor || '#000000'}
+                      onChange={(e) => handleUpdateObject(obj.id, { brushColor: e.target.value })}
+                      className="w-full h-full cursor-pointer opacity-0"
+                    />
+                    <div
+                      className="w-full h-full -mt-6"
+                      style={{ backgroundColor: obj.brushColor === 'eraser' || obj.brushColor === 'transparent' ? '#333333' : (obj.brushColor || '#000000') }}
+                    />
+                  </div>
+                  <Input
                     value={obj.brushColor || '#000000'}
                     onChange={(e) => handleUpdateObject(obj.id, { brushColor: e.target.value })}
-                    className="w-full h-full cursor-pointer opacity-0"
-                  />
-                  <div
-                    className="w-full h-full -mt-6"
-                    style={{ backgroundColor: obj.brushColor || '#000000' }}
+                    className="h-6 text-xs bg-zinc-800 border-zinc-700 text-zinc-300"
                   />
                 </div>
-                <Input
-                  value={obj.brushColor || '#000000'}
-                  onChange={(e) => handleUpdateObject(obj.id, { brushColor: e.target.value })}
-                  className="h-6 text-xs bg-zinc-800 border-zinc-700 text-zinc-300"
-                />
               </div>
             </div>
           </div>

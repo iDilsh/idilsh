@@ -32,6 +32,7 @@ import {
   Circle,
   Square as SquareIcon,
   Minus as FlatIcon,
+  ChevronRight,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -43,6 +44,7 @@ import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import ColorPicker from './ColorPicker';
 import BrushPresets from './BrushPresets';
+import ScrubbySlider from './ScrubbySlider';
 
 interface ToolDef {
   type: ToolType;
@@ -54,6 +56,7 @@ interface ToolDef {
 interface ToolGroupDef {
   groupId: string;
   tools: ToolDef[];
+  hasPopup?: 'shape' | 'brush'; // special popup types
 }
 
 const toolGroups: ToolGroupDef[] = [
@@ -61,15 +64,15 @@ const toolGroups: ToolGroupDef[] = [
     groupId: 'select',
     tools: [
       { type: 'select', icon: MousePointer, label: 'Select', shortcut: 'V' },
-      { type: 'rect-select', icon: Scan, label: 'Rect Select', shortcut: '' },
-      { type: 'ellipse-select', icon: CircleDot, label: 'Ellipse Select', shortcut: '' },
-      { type: 'magic-wand', icon: Wand2, label: 'Magic Wand', shortcut: '' },
+      { type: 'rect-select', icon: Scan, label: 'Rectangular Select', shortcut: 'M' },
+      { type: 'ellipse-select', icon: CircleDot, label: 'Elliptical Select', shortcut: '' },
+      { type: 'magic-wand', icon: Wand2, label: 'Magic Wand', shortcut: 'W' },
     ],
   },
   {
     groupId: 'move',
     tools: [
-      { type: 'move', icon: Move, label: 'Move', shortcut: 'M' },
+      { type: 'move', icon: Move, label: 'Move', shortcut: '' },
       { type: 'hand', icon: Hand, label: 'Hand', shortcut: 'H' },
     ],
   },
@@ -81,6 +84,7 @@ const toolGroups: ToolGroupDef[] = [
   },
   {
     groupId: 'brush',
+    hasPopup: 'brush',
     tools: [
       { type: 'brush', icon: Paintbrush, label: 'Brush', shortcut: 'B' },
       { type: 'eraser', icon: Eraser, label: 'Eraser', shortcut: 'E' },
@@ -104,6 +108,7 @@ const toolGroups: ToolGroupDef[] = [
   },
   {
     groupId: 'shape',
+    hasPopup: 'shape',
     tools: [
       { type: 'shape', icon: Square, label: 'Shape', shortcut: 'U' },
     ],
@@ -129,8 +134,9 @@ const toolGroups: ToolGroupDef[] = [
   },
   {
     groupId: 'effects',
+    hasPopup: 'brush',
     tools: [
-      { type: 'clone-stamp', icon: Copy, label: 'Clone Stamp', shortcut: '' },
+      { type: 'clone-stamp', icon: Copy, label: 'Clone Stamp', shortcut: 'S' },
       { type: 'dodge', icon: Sun, label: 'Dodge', shortcut: '' },
       { type: 'burn', icon: Flame, label: 'Burn', shortcut: '' },
       { type: 'sponge', icon: Droplet, label: 'Sponge', shortcut: '' },
@@ -150,10 +156,9 @@ const toolGroups: ToolGroupDef[] = [
   },
 ];
 
-// Shape selector component
-function ShapeSelector({ onClose }: { onClose: () => void }) {
+// Shape selector component - popup grid of shapes
+function ShapeSelectorPopup({ onClose, onSelectShape }: { onClose: () => void; onSelectShape: (type: ShapeType) => void }) {
   const activeShapeType = useEditorStore((s) => s.activeShapeType);
-  const setActiveShapeType = useEditorStore((s) => s.setActiveShapeType);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -162,8 +167,11 @@ function ShapeSelector({ onClose }: { onClose: () => void }) {
         onClose();
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    // Use a small delay so the opening click doesn't immediately close it
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 50);
+    return () => { clearTimeout(timer); document.removeEventListener('mousedown', handleClickOutside); };
   }, [onClose]);
 
   const shapes: { type: ShapeType; label: string; icon: string }[] = [
@@ -186,17 +194,18 @@ function ShapeSelector({ onClose }: { onClose: () => void }) {
   ];
 
   return (
-    <div ref={ref} className="shape-selector absolute left-12 top-0 bg-zinc-800 border border-zinc-700 rounded-md p-1.5 shadow-lg z-50 w-44">
-      <div className="grid grid-cols-4 gap-0.5">
+    <div ref={ref} className="absolute left-12 top-0 bg-zinc-800 border border-zinc-600 rounded-md p-2 shadow-xl z-50 w-52">
+      <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1.5 px-1">Shapes</div>
+      <div className="grid grid-cols-4 gap-1">
         {shapes.map((shape) => (
           <button
             key={shape.type}
-            className={`w-9 h-9 flex items-center justify-center rounded text-sm transition-colors ${
+            className={`w-10 h-10 flex items-center justify-center rounded text-sm transition-colors ${
               activeShapeType === shape.type
-                ? 'bg-emerald-600 text-white'
+                ? 'bg-emerald-600 text-white ring-1 ring-emerald-400'
                 : 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
             }`}
-            onClick={() => { setActiveShapeType(shape.type); onClose(); }}
+            onClick={() => { onSelectShape(shape.type); onClose(); }}
             title={shape.label}
           >
             {shape.icon}
@@ -207,7 +216,7 @@ function ShapeSelector({ onClose }: { onClose: () => void }) {
   );
 }
 
-// Brush popup menu
+// Brush popup menu with size/hardness/opacity/shape controls and presets
 function BrushPopupMenu({ onClose }: { onClose: () => void }) {
   const activeTool = useEditorStore((s) => s.activeTool);
   const brushSize = useEditorStore((s) => s.brushSize);
@@ -231,8 +240,10 @@ function BrushPopupMenu({ onClose }: { onClose: () => void }) {
         onClose();
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 50);
+    return () => { clearTimeout(timer); document.removeEventListener('mousedown', handleClickOutside); };
   }, [onClose]);
 
   const brushShapes: { type: BrushShape; label: string; icon: React.ReactNode }[] = [
@@ -242,11 +253,22 @@ function BrushPopupMenu({ onClose }: { onClose: () => void }) {
   ];
 
   return (
-    <div ref={ref} className="absolute left-12 bottom-24 bg-zinc-800 border border-zinc-700 rounded-md shadow-lg z-50 w-48 p-3 space-y-3">
+    <div ref={ref} className="absolute left-12 bg-zinc-800 border border-zinc-600 rounded-md shadow-xl z-50 w-52 p-3 space-y-3">
+      <div className="text-[10px] text-zinc-500 uppercase tracking-wider">Brush Settings</div>
+      
+      {/* Size */}
       <div className="space-y-1">
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-zinc-400">Size</span>
-          <span className="text-[10px] text-zinc-300">{currentSize}px</span>
+          <ScrubbySlider
+            value={currentSize}
+            onChange={setCurrentSize}
+            min={1}
+            max={500}
+            step={1}
+            suffix="px"
+            className="text-[10px] text-zinc-300"
+          />
         </div>
         <Slider
           min={1}
@@ -257,24 +279,46 @@ function BrushPopupMenu({ onClose }: { onClose: () => void }) {
           className="w-full"
         />
       </div>
-      <div className="space-y-1">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] text-zinc-400">Hardness</span>
-          <span className="text-[10px] text-zinc-300">{brushHardness}%</span>
+
+      {/* Hardness (only for non-eraser) */}
+      {activeTool !== 'eraser' && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-zinc-400">Hardness</span>
+            <ScrubbySlider
+              value={brushHardness}
+              onChange={setBrushHardness}
+              min={0}
+              max={100}
+              step={1}
+              suffix="%"
+              className="text-[10px] text-zinc-300"
+            />
+          </div>
+          <Slider
+            min={0}
+            max={100}
+            step={1}
+            value={[brushHardness]}
+            onValueChange={(v) => setBrushHardness(v[0])}
+            className="w-full"
+          />
         </div>
-        <Slider
-          min={0}
-          max={100}
-          step={1}
-          value={[brushHardness]}
-          onValueChange={(v) => setBrushHardness(v[0])}
-          className="w-full"
-        />
-      </div>
+      )}
+
+      {/* Opacity */}
       <div className="space-y-1">
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-zinc-400">Opacity</span>
-          <span className="text-[10px] text-zinc-300">{brushOpacity}%</span>
+          <ScrubbySlider
+            value={brushOpacity}
+            onChange={setBrushOpacity}
+            min={1}
+            max={100}
+            step={1}
+            suffix="%"
+            className="text-[10px] text-zinc-300"
+          />
         </div>
         <Slider
           min={1}
@@ -285,6 +329,7 @@ function BrushPopupMenu({ onClose }: { onClose: () => void }) {
           className="w-full"
         />
       </div>
+
       {/* Brush Shape selector */}
       <div className="space-y-1">
         <span className="text-[10px] text-zinc-400">Shape</span>
@@ -305,8 +350,56 @@ function BrushPopupMenu({ onClose }: { onClose: () => void }) {
           ))}
         </div>
       </div>
+      
       <Separator className="bg-zinc-700" />
       <BrushPresets />
+    </div>
+  );
+}
+
+// Tool group flyout popup - shows sub-tools when clicking a tool with variants
+function ToolFlyoutPopup({ group, onSelectTool, onClose }: { 
+  group: ToolGroupDef; 
+  onSelectTool: (tool: ToolDef) => void; 
+  onClose: () => void;
+}) {
+  const activeTool = useEditorStore((s) => s.activeTool);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 50);
+    return () => { clearTimeout(timer); document.removeEventListener('mousedown', handleClickOutside); };
+  }, [onClose]);
+
+  return (
+    <div ref={ref} className="absolute left-12 top-0 bg-zinc-800 border border-zinc-600 rounded-md shadow-xl z-50 py-1 min-w-[160px]">
+      {group.tools.map((tool) => {
+        const ToolIcon = tool.icon;
+        return (
+          <button
+            key={tool.type}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
+              activeTool === tool.type
+                ? 'bg-emerald-600/20 text-emerald-400'
+                : 'text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100'
+            }`}
+            onClick={() => { onSelectTool(tool); onClose(); }}
+          >
+            <ToolIcon size={14} />
+            <span className="text-xs flex-1">{tool.label}</span>
+            {tool.shortcut && (
+              <span className="text-[10px] text-zinc-500 bg-zinc-700/50 px-1.5 py-0.5 rounded">{tool.shortcut}</span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -321,11 +414,12 @@ export default function Toolbar() {
   const fillTolerance = useEditorStore((s) => s.fillTolerance);
   const setFillTolerance = useEditorStore((s) => s.setFillTolerance);
   const setCropMode = useEditorStore((s) => s.setCropMode);
-  const [showShapeSelector, setShowShapeSelector] = useState(false);
-  const [showBrushPresets, setShowBrushPresets] = useState(false);
-  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
-  const [clickedGroup, setClickedGroup] = useState<string | null>(null);
-  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const setActiveShapeType = useEditorStore((s) => s.setActiveShapeType);
+
+  // Track which popup is open: null, 'flyout-{groupId}', 'shape', 'brush'
+  const [openPopup, setOpenPopup] = useState<string | null>(null);
+  
+  // Track which sub-tool is active per group (for displaying the right icon)
   const [activeSubTool, setActiveSubTool] = useState<Record<string, ToolType>>({
     select: 'select',
     move: 'move',
@@ -338,34 +432,9 @@ export default function Toolbar() {
   const brushTypeTools: ToolType[] = ['brush', 'eraser', 'dodge', 'burn', 'sponge', 'blur-brush', 'sharpen-brush', 'clone-stamp'];
   const showBrushSize = brushTypeTools.includes(activeTool);
 
-  const handleMouseEnterGroup = useCallback((groupId: string) => {
-    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-    hoverTimeoutRef.current = setTimeout(() => {
-      setHoveredGroup(groupId);
-    }, 300);
-  }, []);
-
-  const handleMouseLeaveGroup = useCallback(() => {
-    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-    hoverTimeoutRef.current = setTimeout(() => {
-      setHoveredGroup(null);
-    }, 200);
-  }, []);
-
-  const handleToolClick = useCallback((tool: ToolDef, groupId: string) => {
+  const handleToolSelect = useCallback((tool: ToolDef, groupId: string) => {
     setActiveTool(tool.type);
     setActiveSubTool((prev) => ({ ...prev, [groupId]: tool.type }));
-
-    if (tool.type === 'shape') {
-      setShowShapeSelector((prev) => !prev);
-      setShowBrushPresets(false);
-    } else if (brushTypeTools.includes(tool.type)) {
-      setShowBrushPresets((prev) => !prev);
-      setShowShapeSelector(false);
-    } else {
-      setShowShapeSelector(false);
-      setShowBrushPresets(false);
-    }
 
     // Set crop mode based on tool selection
     if (tool.type === 'crop') {
@@ -374,11 +443,40 @@ export default function Toolbar() {
       setCropMode('circle');
     }
 
-    setClickedGroup(null);
-    setHoveredGroup(null);
+    // Close any open popup
+    setOpenPopup(null);
   }, [setActiveTool, setCropMode]);
 
-  // Get the currently displayed tool for a group
+  // Handle main button click
+  const handleMainButtonClick = useCallback((group: ToolGroupDef) => {
+    const groupId = group.groupId;
+    const hasMultipleTools = group.tools.length > 1;
+    
+    if (hasMultipleTools) {
+      // Toggle flyout popup for multi-tool groups
+      const flyoutId = `flyout-${groupId}`;
+      setOpenPopup((prev) => prev === flyoutId ? null : flyoutId);
+    } else if (group.hasPopup === 'shape') {
+      // Toggle shape selector popup
+      setOpenPopup((prev) => prev === 'shape' ? null : 'shape');
+      // Also activate the shape tool
+      const displayedTool = getDisplayedTool(group);
+      setActiveTool(displayedTool.type);
+    } else if (group.hasPopup === 'brush') {
+      // Toggle brush popup
+      setOpenPopup((prev) => prev === 'brush' ? null : 'brush');
+      // Also activate the displayed tool
+      const displayedTool = getDisplayedTool(group);
+      setActiveTool(displayedTool.type);
+    } else {
+      // Single tool - just activate it
+      setActiveTool(group.tools[0].type);
+      setActiveSubTool((prev) => ({ ...prev, [groupId]: group.tools[0].type }));
+      setOpenPopup(null);
+    }
+  }, [setActiveTool]);
+
+  // Get the currently displayed tool for a group (shows last-used sub-tool icon)
   const getDisplayedTool = useCallback((group: ToolGroupDef): ToolDef => {
     const subTool = activeSubTool[group.groupId];
     if (subTool) {
@@ -391,106 +489,87 @@ export default function Toolbar() {
     return group.tools[0];
   }, [activeSubTool, activeTool]);
 
-  // Handle main button click (opens flyout or activates tool)
-  const handleMainButtonClick = useCallback((group: ToolGroupDef) => {
-    const displayedTool = getDisplayedTool(group);
-    
-    if (group.tools.length > 1) {
-      // Toggle flyout on click for multi-tool groups
-      if (group.groupId === 'shape') {
-        setShowShapeSelector((prev) => !prev);
-        setShowBrushPresets(false);
-      } else if (group.groupId === 'brush' || group.groupId === 'effects') {
-        setShowBrushPresets((prev) => !prev);
-        setShowShapeSelector(false);
-      } else {
-        // For other groups, toggle clicked flyout
-        setClickedGroup((prev) => prev === group.groupId ? null : group.groupId);
-      }
-    }
-    
-    handleToolClick(displayedTool, group.groupId);
-  }, [handleToolClick, getDisplayedTool]);
-
   const isGroupActive = (group: ToolGroupDef): boolean => {
     return group.tools.some((t) => t.type === activeTool);
   };
 
   const hasMultipleTools = (group: ToolGroupDef): boolean => {
-    return group.tools.length > 1;
-  };
-
-  // Determine which flyout is showing
-  const getShowingFlyout = (group: ToolGroupDef): boolean => {
-    if (hoveredGroup === group.groupId) return true;
-    if (clickedGroup === group.groupId) return true;
-    // Shape selector shows on hover/click for shape group
-    if (group.groupId === 'shape' && showShapeSelector) return true;
-    return false;
+    return group.tools.length > 1 || !!group.hasPopup;
   };
 
   return (
-    <TooltipProvider delayDuration={300}>
+    <TooltipProvider delayDuration={500}>
       <div className="w-12 bg-zinc-900 border-r border-zinc-700 flex flex-col items-center py-2 gap-0.5 overflow-y-auto custom-scrollbar relative">
         {toolGroups.map((group, gi) => {
           const displayedTool = getDisplayedTool(group);
           const Icon = displayedTool.icon;
           const isActive = isGroupActive(group);
-          const showFlyout = hasMultipleTools(group) && getShowingFlyout(group);
+          const hasSubTools = hasMultipleTools(group);
+          
+          // Determine which popup to show for this group
+          let showFlyout = false;
+          let showShapePopup = false;
+          let showBrushPopup = false;
+          
+          if (group.tools.length > 1 && openPopup === `flyout-${group.groupId}`) {
+            showFlyout = true;
+          }
+          if (group.hasPopup === 'shape' && openPopup === 'shape' && activeTool === 'shape') {
+            showShapePopup = true;
+          }
+          if (group.hasPopup === 'brush' && openPopup === 'brush' && brushTypeTools.includes(activeTool)) {
+            showBrushPopup = true;
+          }
 
           return (
-            <div
-              key={group.groupId}
-              onMouseEnter={() => handleMouseEnterGroup(group.groupId)}
-              onMouseLeave={handleMouseLeaveGroup}
-              className="relative"
-            >
-              {gi > 0 && gi <= toolGroups.length && <Separator className="my-1 bg-zinc-700 w-8" />}
+            <div key={group.groupId} className="relative">
+              {gi > 0 && <Separator className="my-0.5 bg-zinc-700/50 w-8" />}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => handleMainButtonClick(group)}
-                    className={`w-9 h-9 flex items-center justify-center rounded-md transition-colors relative ${
+                    className={`w-9 h-9 flex items-center justify-center rounded-md transition-all relative group/btn ${
                       isActive
-                        ? 'bg-emerald-600 text-white'
+                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
                         : 'text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
                     }`}
                   >
                     <Icon size={18} />
-                    {hasMultipleTools(group) && (
-                      <span className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 bg-zinc-400 rounded-full" />
+                    {/* Sub-tool indicator triangle */}
+                    {hasSubTools && (
+                      <span className="absolute bottom-0 right-0 w-0 h-0 border-l-[4px] border-l-transparent border-b-[4px] border-b-zinc-400 group-hover/btn:border-b-zinc-200" />
                     )}
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="right" className="bg-zinc-800 text-zinc-200 border-zinc-700">
+                <TooltipContent side="right" className="bg-zinc-800 text-zinc-200 border-zinc-600">
                   <p>{displayedTool.label}{displayedTool.shortcut ? ` (${displayedTool.shortcut})` : ''}</p>
+                  {hasSubTools && <p className="text-[10px] text-zinc-500">Click for more tools</p>}
                 </TooltipContent>
               </Tooltip>
 
-              {/* Flyout submenu for tool groups */}
-              {showFlyout && group.groupId !== 'shape' && (
-                <div className="absolute left-12 top-0 bg-zinc-800 border border-zinc-700 rounded-md shadow-lg z-50 py-1 min-w-[120px]">
-                  {group.tools.map((tool) => {
-                    const ToolIcon = tool.icon;
-                    return (
-                      <button
-                        key={tool.type}
-                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-left transition-colors ${
-                          activeTool === tool.type
-                            ? 'bg-emerald-600/20 text-emerald-400'
-                            : 'text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100'
-                        }`}
-                        onClick={() => handleToolClick(tool, group.groupId)}
-                      >
-                        <ToolIcon size={14} />
-                        <span className="text-xs">{tool.label}</span>
-                        {tool.shortcut && (
-                          <span className="text-[10px] text-zinc-500 ml-auto">{tool.shortcut}</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+              {/* Flyout submenu for multi-tool groups */}
+              {showFlyout && (
+                <ToolFlyoutPopup
+                  group={group}
+                  onSelectTool={(tool) => handleToolSelect(tool, group.groupId)}
+                  onClose={() => setOpenPopup(null)}
+                />
+              )}
+
+              {/* Shape selector popup */}
+              {showShapePopup && (
+                <ShapeSelectorPopup
+                  onClose={() => setOpenPopup(null)}
+                  onSelectShape={(type) => {
+                    setActiveShapeType(type);
+                    setOpenPopup(null);
+                  }}
+                />
+              )}
+
+              {/* Brush settings popup */}
+              {showBrushPopup && (
+                <BrushPopupMenu onClose={() => setOpenPopup(null)} />
               )}
             </div>
           );
@@ -498,11 +577,18 @@ export default function Toolbar() {
 
         <Separator className="my-1 bg-zinc-700 w-8" />
 
+        {/* Quick brush size control */}
         {showBrushSize && (
           <div className="w-10 flex flex-col items-center gap-1 py-1">
-            <span className="text-[10px] text-zinc-500">
-              {activeTool === 'eraser' ? eraserSize : brushSize}px
-            </span>
+            <ScrubbySlider
+              value={activeTool === 'eraser' ? eraserSize : brushSize}
+              onChange={activeTool === 'eraser' ? setEraserSize : setBrushSize}
+              min={1}
+              max={500}
+              step={1}
+              suffix="px"
+              className="text-[10px] text-zinc-400"
+            />
             <Slider
               min={1}
               max={500}
@@ -517,9 +603,18 @@ export default function Toolbar() {
           </div>
         )}
 
+        {/* Fill tolerance control */}
         {activeTool === 'fill' && (
           <div className="w-10 flex flex-col items-center gap-1 py-1">
-            <span className="text-[10px] text-zinc-500">{fillTolerance}</span>
+            <ScrubbySlider
+              value={fillTolerance}
+              onChange={setFillTolerance}
+              min={0}
+              max={255}
+              step={1}
+              suffix=""
+              className="text-[10px] text-zinc-400"
+            />
             <Slider
               min={0}
               max={255}
@@ -530,12 +625,6 @@ export default function Toolbar() {
             />
           </div>
         )}
-
-        {/* Shape selector popup */}
-        {showShapeSelector && activeTool === 'shape' && <ShapeSelector onClose={() => setShowShapeSelector(false)} />}
-        
-        {/* Brush presets popup */}
-        {showBrushPresets && brushTypeTools.includes(activeTool) && <BrushPopupMenu onClose={() => setShowBrushPresets(false)} />}
 
         <div className="mt-auto">
           <ColorPicker />

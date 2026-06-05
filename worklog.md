@@ -238,3 +238,39 @@ All 13 major issues have been fixed. Build and lint pass successfully.
 ## Build Verification
 - `npx next build` passes successfully with no errors
 - `bun run lint` passes with no errors
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix paint bucket (fill) tool, sub-tool popup menus, and scrubby sliders
+
+Work Log:
+- Analyzed the fill tool issue: stage.toCanvas() was capturing everything including white background and checkerboard, causing flood fill to fill the entire canvas when clicking on white
+- Fixed fill tool: now crops the stage canvas to only the canvas area (accounting for zoom/offset), and creates minimal images with only changed pixels (transparent for unchanged areas)
+- Fixed eyedropper tool: same issue as fill tool, now properly crops stage canvas to canvas area
+- Completely rewrote Toolbar.tsx with proper sub-tool flyout popup system:
+  - Clicking a tool with sub-tools shows a popup menu with all related tools
+  - Last-used sub-tool icon is displayed on the toolbar button
+  - Small triangle indicator on buttons with sub-tools
+  - Shape selector popup for shape tools
+  - Brush settings popup (size, hardness, opacity, shape, presets) for brush-type tools
+  - Effect tools (clone stamp, dodge, burn, sponge) also show brush settings popup
+  - Keyboard shortcut hints shown in flyout menus
+- Enhanced ScrubbySlider component:
+  - Added full-screen overlay during drag to prevent cursor escaping
+  - Shift key for finer control (0.1x), Ctrl for coarser (5x)
+  - Auto-scale based on value range for better UX
+  - Added asLabel mode for dragging on property labels (Photoshop style)
+  - Better visual feedback with background highlight on hover/active
+- Applied ScrubbySliders everywhere:
+  - PropertiesPanel: all numeric values (position X/Y, size W/H, rotation, stroke width, corner radius, font size, opacity) are scrubby
+  - PropertiesPanel: opacity label itself is a scrubby slider
+  - LayerPanel: opacity label is now a scrubby slider
+  - LayerEffectsPanel: all SliderRow labels are scrubby sliders (drag on "Opacity:", "Blur:", etc.)
+  - Toolbar: brush size and fill tolerance use scrubby sliders
+- Added keyboard shortcuts W (magic wand) and S (clone stamp)
+
+Stage Summary:
+- Fill tool now works correctly by only capturing canvas content area and creating minimal fill images
+- Sub-tool popup menus work on click with persistent display until selection
+- Scrubby sliders applied throughout the entire app for Photoshop-like value adjustment
+- All changes compile successfully with next build

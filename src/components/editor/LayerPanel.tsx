@@ -327,7 +327,16 @@ export default function LayerPanel() {
       {activeLayer && (
         <div className="border-t border-zinc-700 px-3 py-2 space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-zinc-500 w-12">Opacity</span>
+            <ScrubbySlider
+              value={activeLayer.opacity}
+              onChange={(v) => updateLayer(activeLayer.id, { opacity: v })}
+              min={0}
+              max={100}
+              step={1}
+              asLabel
+              label="Opacity"
+              className="text-[10px] text-zinc-500 w-12"
+            />
             <Slider
               min={0}
               max={100}

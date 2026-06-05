@@ -73,7 +73,17 @@ function SliderRow({ label, value, min, max, step = 1, onChange, suffix = '' }: 
 }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-[10px] text-zinc-500 w-14">{label}</span>
+      {/* Label is also a scrubby slider (drag on the label name to adjust!) */}
+      <ScrubbySlider
+        value={value}
+        onChange={onChange}
+        min={min}
+        max={max}
+        step={step}
+        asLabel
+        label={label}
+        className="text-[10px] text-zinc-500 w-14"
+      />
       <Slider min={min} max={max} step={step} value={[value]} onValueChange={(v) => onChange(v[0])} className="flex-1" />
       <ScrubbySlider value={value} onChange={onChange} min={min} max={max} step={step} suffix={suffix} className="text-[10px] text-zinc-400 w-10 text-right" />
     </div>
