@@ -1,4 +1,3 @@
-import { readPsd } from 'ag-psd';
 import type { EditorLayer, EditorObject, LayerEffects, BlendMode } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -9,6 +8,8 @@ export interface PSDImportResult {
 }
 
 export async function parsePSDFile(file: File): Promise<PSDImportResult> {
+  // Dynamic import to prevent build-time resolution of Node.js 'canvas' module
+  const { readPsd } = await import('ag-psd');
   const buffer = await file.arrayBuffer();
   const psd = readPsd(buffer, {
     skipCompositeImageData: false,
