@@ -1,10 +1,13 @@
 export type ToolType =
-  | 'select' | 'move' | 'hand' | 'zoom'
+  | 'select' | 'rect-select' | 'ellipse-select' | 'magic-wand'
+  | 'move' | 'hand' | 'zoom'
   | 'brush' | 'eraser' | 'fill' | 'eyedropper'
   | 'text' | 'shape' | 'line' | 'pen'
-  | 'crop' | 'slice'
+  | 'crop' | 'circle-crop' | 'slice'
   | 'gradient' | 'clone-stamp' | 'blur-brush' | 'sharpen-brush'
-  | 'dodge' | 'burn' | 'sponge' | 'measure' | 'marquee';
+  | 'dodge' | 'burn' | 'sponge' | 'measure';
+
+export type BrushShape = 'round' | 'square' | 'flat';
 
 export type ShapeType = 
   | 'rectangle' | 'rounded-rect' | 'ellipse' | 'circle'
@@ -95,6 +98,15 @@ export interface BrushPreset {
   icon: string;
 }
 
+// Selection state
+export interface SelectionState {
+  type: 'rect' | 'ellipse' | 'magic-wand';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 // Crop state
 export interface CropState {
   startX: number;
@@ -140,6 +152,7 @@ export interface EditorLayer {
   effects?: LayerEffects;
   maskData?: string; // base64 encoded image data for the mask
   hasMask?: boolean;
+  color?: 'red' | 'blue' | 'green' | 'yellow';
 }
 
 export interface EditorObject {

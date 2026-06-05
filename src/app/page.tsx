@@ -637,6 +637,9 @@ export default function EditorPage() {
 
   const toolNameMap: Record<string, string> = {
     select: 'Select',
+    'rect-select': 'Rect Select',
+    'ellipse-select': 'Ellipse Select',
+    'magic-wand': 'Magic Wand',
     move: 'Move',
     hand: 'Hand',
     zoom: 'Zoom',
@@ -650,6 +653,7 @@ export default function EditorPage() {
     crop: 'Crop',
     pen: 'Pen',
     gradient: 'Gradient',
+    'circle-crop': 'Circle Crop',
     'clone-stamp': 'Clone Stamp',
     'blur-brush': 'Blur Brush',
     'sharpen-brush': 'Sharpen Brush',
@@ -657,7 +661,6 @@ export default function EditorPage() {
     burn: 'Burn',
     sponge: 'Sponge',
     measure: 'Measure',
-    marquee: 'Marquee',
     slice: 'Slice',
   };
 
@@ -687,8 +690,9 @@ export default function EditorPage() {
         <EditorCanvas />
 
         {/* Right Panel */}
-        <div className="flex flex-col">
+        <div className="flex flex-col overflow-hidden">
           <LayerPanel />
+          {/* FIX 11: LayerEffectsPanel when pinned renders inline under layers */}
           <LayerEffectsPanel />
           <PropertiesPanel />
         </div>

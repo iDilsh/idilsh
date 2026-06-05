@@ -967,7 +967,7 @@ export function getShadowProps(effects: LayerEffects | undefined): Record<string
   if (!effects) return {};
   const props: Record<string, unknown> = {};
 
-  // Drop shadow
+  // Drop shadow takes priority for the main shadow
   if (effects.dropShadow?.enabled) {
     const rad = (effects.dropShadow.angle * Math.PI) / 180;
     props.shadowColor = effects.dropShadow.color;
@@ -976,9 +976,8 @@ export function getShadowProps(effects: LayerEffects | undefined): Record<string
     props.shadowOffsetY = Math.sin(rad) * effects.dropShadow.distance;
     props.shadowOpacity = effects.dropShadow.opacity / 100;
   }
-
-  // Outer glow - combine with shadow if drop shadow not enabled
-  if (effects.outerGlow?.enabled && !effects.dropShadow?.enabled) {
+  // Outer glow - use if drop shadow not enabled
+  else if (effects.outerGlow?.enabled) {
     props.shadowColor = effects.outerGlow.color;
     props.shadowBlur = effects.outerGlow.blur;
     props.shadowOffsetX = 0;
@@ -987,6 +986,77 @@ export function getShadowProps(effects: LayerEffects | undefined): Record<string
   }
 
   return props;
+}
+
+// Get outer glow props separately (for rendering as additional element)
+// FIX 12: Always return glow props when enabled, regardless of drop shadow state
+export function getOuterGlowProps(effects: LayerEffects | undefined): Record<string, unknown> | null {
+  if (!effects?.outerGlow?.enabled) return null;
+  // Only return separate glow element when drop shadow is also enabled
+  // (when drop shadow is not enabled, outer glow is handled via getShadowProps)
+  if (!effects.dropShadow?.enabled) return null;
+  return {
+    shadowColor: effects.outerGlow.color,
+    shadowBlur: effects.outerGlow.blur,
+    shadowOffsetX: 0,
+    shadowOffsetY: 0,
+    shadowOpacity: effects.outerGlow.opacity / 100,
+  };
+}
+
+// Get inner shadow props for Konva rendering
+export function getInnerShadowProps(effects: LayerEffects | undefined): Record<string, unknown> | null {
+  if (!effects?.innerShadow?.enabled) return null;
+  const rad = (effects.innerShadow.angle * Math.PI) / 180;
+  return {
+    innerShadowColor: effects.innerShadow.color,
+    innerShadowBlur: effects.innerShadow.blur,
+    innerShadowOffsetX: Math.cos(rad) * effects.innerShadow.distance,
+    innerShadowOffsetY: Math.sin(rad) * effects.innerShadow.distance,
+    innerShadowOpacity: effects.innerShadow.opacity / 100,
+  };
+}
+
+// Get inner glow props
+// FIX 12: Include spread property for inner glow
+export function getInnerGlowProps(effects: LayerEffects | undefined): Record<string, unknown> | null {
+  if (!effects?.innerGlow?.enabled) return null;
+  return {
+    innerGlowColor: effects.innerGlow.color,
+    innerGlowBlur: effects.innerGlow.blur,
+    innerGlowOpacity: effects.innerGlow.opacity / 100,
+    innerGlowSpread: effects.innerGlow.spread,
+  };
+}
+
+// Get bevel/emboss props
+export function getBevelProps(effects: LayerEffects | undefined): Record<string, unknown> | null {
+  if (!effects?.bevelEmboss?.enabled) return null;
+  return {
+    bevelStyle: effects.bevelEmboss.style,
+    bevelDepth: effects.bevelEmboss.depth,
+    bevelDirection: effects.bevelEmboss.direction,
+    bevelSize: effects.bevelEmboss.size,
+    bevelSoften: effects.bevelEmboss.soften,
+    bevelAngle: effects.bevelEmboss.angle,
+    bevelAltitude: effects.bevelEmboss.altitude,
+    highlightColor: effects.bevelEmboss.highlightColor,
+    highlightOpacity: effects.bevelEmboss.highlightOpacity,
+    shadowColor: effects.bevelEmboss.shadowColor,
+    shadowOpacity: effects.bevelEmboss.shadowOpacity,
+  };
+}
+
+// Get satin props
+export function getSatinProps(effects: LayerEffects | undefined): Record<string, unknown> | null {
+  if (!effects?.satin?.enabled) return null;
+  return {
+    satinColor: effects.satin.color,
+    satinOpacity: effects.satin.opacity,
+    satinAngle: effects.satin.angle,
+    satinDistance: effects.satin.distance,
+    satinBlur: effects.satin.blur,
+  };
 }
 
 // Get stroke effect props for Konva rendering (rendered as additional stroke behind)

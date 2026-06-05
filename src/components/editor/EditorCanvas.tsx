@@ -4,14 +4,13 @@ import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { Stage, Layer, Rect, Line, Ellipse, Text, Image as KonvaImage, Transformer, Shape, Group, Path } from 'react-konva';
 import type Konva from 'konva';
 import { useEditorStore } from '@/lib/editor-store';
-import type { EditorObject, LayerEffects, CropState, SnapGuide } from '@/lib/types';
-import { getShadowProps, getStrokeEffectProps, floodFill, hexToRgba } from '@/lib/image-processing';
+import type { EditorObject, LayerEffects, SnapGuide, PathAnchor } from '@/lib/types';
+import { getShadowProps, getStrokeEffectProps, floodFill, hexToRgba, getOuterGlowProps, getInnerShadowProps, getInnerGlowProps, getBevelProps, getSatinProps, applyBlur, applySharpen, adjustBrightness, adjustSaturation } from '@/lib/image-processing';
 import { v4 as uuidv4 } from 'uuid';
 
-// Image cache to avoid re-creating HTMLImageElement
+// Image cache
 const imageCache = new Map<string, HTMLImageElement>();
 
-// Preload image and call callback
 function preloadImage(src: string, callback: (img: HTMLImageElement) => void) {
   if (imageCache.has(src)) {
     callback(imageCache.get(src)!);
@@ -26,7 +25,6 @@ function preloadImage(src: string, callback: (img: HTMLImageElement) => void) {
   img.src = src;
 }
 
-// Separate component for image objects (needs its own state)
 function ImageObjectRenderer({ obj, commonProps, shadowProps }: { obj: EditorObject; commonProps: Record<string, unknown>; shadowProps: Record<string, unknown> }) {
   const [imgElement, setImgElement] = useState<HTMLImageElement | null>(null);
 
@@ -53,7 +51,7 @@ function ImageObjectRenderer({ obj, commonProps, shadowProps }: { obj: EditorObj
   );
 }
 
-// Shape rendering helper
+// Shape drawing helpers
 function drawRegularPolygon(context: Konva.Context, cx: number, cy: number, radius: number, sides: number, startAngle: number = -Math.PI / 2) {
   context.beginPath();
   for (let i = 0; i < sides; i++) {
@@ -93,7 +91,6 @@ function drawHeart(context: Konva.Context, cx: number, cy: number, w: number, h:
 function drawArrow(context: Konva.Context, w: number, h: number, direction: 'right' | 'left' | 'up' | 'down') {
   const arrowHeadSize = Math.min(w, h) * 0.4;
   context.beginPath();
-  
   switch (direction) {
     case 'right':
       context.moveTo(0, h / 2 - arrowHeadSize / 2);
@@ -162,6 +159,267 @@ function drawDiamond(context: Konva.Context, w: number, h: number) {
   context.closePath();
 }
 
+// Layer effects rendering for Konva
+function LayerEffectsOverlay({ obj, layerEffects }: { obj: EditorObject; layerEffects?: LayerEffects }) {
+  if (!layerEffects) return null;
+  const w = obj.width || 100;
+  const h = obj.height || 100;
+
+  const elements: React.ReactNode[] = [];
+
+  // FIX 12: Outer glow (separate from drop shadow - always renders when enabled, even if drop shadow is also enabled)
+  const outerGlowProps = getOuterGlowProps(layerEffects);
+  if (outerGlowProps) {
+    if (obj.type === 'rect' || (obj.shapeType && obj.type === 'rect')) {
+      elements.push(
+        <Rect
+          key="outer-glow"
+          x={obj.x}
+          y={obj.y}
+          width={w}
+          height={h}
+          fill={obj.fill}
+          cornerRadius={obj.cornerRadius || 0}
+          {...outerGlowProps}
+          listening={false}
+        />
+      );
+    } else if (obj.type === 'ellipse' || obj.type === 'circle') {
+      elements.push(
+        <Ellipse
+          key="outer-glow"
+          x={obj.x + w / 2}
+          y={obj.y + h / 2}
+          radiusX={w / 2}
+          radiusY={h / 2}
+          fill={obj.fill}
+          {...outerGlowProps}
+          listening={false}
+        />
+      );
+    }
+  }
+
+  // FIX 12: Inner shadow - improved rendering with inverted shadow
+  const innerShadowProps = getInnerShadowProps(layerEffects);
+  if (innerShadowProps) {
+    const offX = innerShadowProps.innerShadowOffsetX as number;
+    const offY = innerShadowProps.innerShadowOffsetY as number;
+    const blur = innerShadowProps.innerShadowBlur as number;
+    const color = innerShadowProps.innerShadowColor as string;
+    const opacity = innerShadowProps.innerShadowOpacity as number;
+
+    if (obj.type === 'rect' || (obj.shapeType && obj.type === 'rect')) {
+      elements.push(
+        <Group key="inner-shadow" clipX={obj.x} clipY={obj.y} clipWidth={w} clipHeight={h}>
+          <Rect
+            x={obj.x + offX}
+            y={obj.y + offY}
+            width={w}
+            height={h}
+            fill={color}
+            cornerRadius={obj.cornerRadius || 0}
+            shadowColor={color}
+            shadowBlur={blur}
+            shadowOffsetX={0}
+            shadowOffsetY={0}
+            shadowOpacity={1}
+            opacity={opacity}
+            listening={false}
+          />
+        </Group>
+      );
+    } else if (obj.type === 'ellipse' || obj.type === 'circle') {
+      elements.push(
+        <Group key="inner-shadow" clipX={obj.x} clipY={obj.y} clipWidth={w} clipHeight={h}>
+          <Ellipse
+            x={obj.x + w / 2 + offX}
+            y={obj.y + h / 2 + offY}
+            radiusX={w / 2}
+            radiusY={h / 2}
+            fill={color}
+            shadowColor={color}
+            shadowBlur={blur}
+            shadowOffsetX={0}
+            shadowOffsetY={0}
+            shadowOpacity={1}
+            opacity={opacity}
+            listening={false}
+          />
+        </Group>
+      );
+    }
+  }
+
+  // FIX 12: Inner glow rendering
+  const innerGlowProps = getInnerGlowProps(layerEffects);
+  if (innerGlowProps) {
+    const glowColor = innerGlowProps.innerGlowColor as string;
+    const glowBlur = innerGlowProps.innerGlowBlur as number;
+    const glowOpacity = innerGlowProps.innerGlowOpacity as number;
+    const spread = (innerGlowProps.innerGlowSpread as number) || 0;
+    const inset = spread / 100 * Math.min(w, h) / 2;
+
+    if (obj.type === 'rect' || (obj.shapeType && obj.type === 'rect')) {
+      elements.push(
+        <Group key="inner-glow" clipX={obj.x} clipY={obj.y} clipWidth={w} clipHeight={h}>
+          <Rect
+            x={obj.x + inset}
+            y={obj.y + inset}
+            width={w - inset * 2}
+            height={h - inset * 2}
+            fill={glowColor}
+            cornerRadius={Math.max(0, (obj.cornerRadius || 0) - inset)}
+            shadowColor={glowColor}
+            shadowBlur={glowBlur}
+            shadowOffsetX={0}
+            shadowOffsetY={0}
+            shadowOpacity={1}
+            opacity={glowOpacity}
+            listening={false}
+          />
+        </Group>
+      );
+    } else if (obj.type === 'ellipse' || obj.type === 'circle') {
+      elements.push(
+        <Group key="inner-glow" clipX={obj.x} clipY={obj.y} clipWidth={w} clipHeight={h}>
+          <Ellipse
+            x={obj.x + w / 2}
+            y={obj.y + h / 2}
+            radiusX={w / 2 - inset}
+            radiusY={h / 2 - inset}
+            fill={glowColor}
+            shadowColor={glowColor}
+            shadowBlur={glowBlur}
+            shadowOffsetX={0}
+            shadowOffsetY={0}
+            shadowOpacity={1}
+            opacity={glowOpacity}
+            listening={false}
+          />
+        </Group>
+      );
+    }
+  }
+
+  // FIX 12: Improved Bevel & Emboss with gradient-based rendering
+  const bevelProps = getBevelProps(layerEffects);
+  if (bevelProps) {
+    const size = (bevelProps.bevelSize as number) || 5;
+    const direction = (bevelProps.bevelDirection as string) || 'up';
+    const depth = ((bevelProps.bevelDepth as number) || 100) / 100;
+    const highlightShift = direction === 'up' ? -size / 2 : size / 2;
+    const shadowShift = direction === 'up' ? size / 2 : -size / 2;
+    const highlightColor = (bevelProps.highlightColor as string) || '#ffffff';
+    const shadowColor = (bevelProps.shadowColor as string) || '#000000';
+    const highlightOpacity = ((bevelProps.highlightOpacity as number) || 75) / 200 * depth;
+    const shadowOpacity = ((bevelProps.shadowOpacity as number) || 75) / 200 * depth;
+    
+    if (obj.type === 'rect' || (obj.shapeType && obj.type === 'rect')) {
+      elements.push(
+        <Group key="bevel" clipX={obj.x} clipY={obj.y} clipWidth={w} clipHeight={h}>
+          <Rect
+            x={obj.x}
+            y={obj.y + highlightShift}
+            width={w}
+            height={h * 0.4}
+            fill={highlightColor}
+            opacity={highlightOpacity}
+            cornerRadius={obj.cornerRadius || 0}
+            listening={false}
+          />
+          <Rect
+            x={obj.x}
+            y={obj.y + h * 0.6 + shadowShift}
+            width={w}
+            height={h * 0.4}
+            fill={shadowColor}
+            opacity={shadowOpacity}
+            cornerRadius={obj.cornerRadius || 0}
+            listening={false}
+          />
+        </Group>
+      );
+    } else if (obj.type === 'ellipse' || obj.type === 'circle') {
+      elements.push(
+        <Group key="bevel" clipX={obj.x} clipY={obj.y} clipWidth={w} clipHeight={h}>
+          <Ellipse
+            x={obj.x + w / 2}
+            y={obj.y + h / 2 + highlightShift}
+            radiusX={w / 2}
+            radiusY={h / 3}
+            fill={highlightColor}
+            opacity={highlightOpacity}
+            listening={false}
+          />
+          <Ellipse
+            x={obj.x + w / 2}
+            y={obj.y + h / 2 + shadowShift}
+            radiusX={w / 2}
+            radiusY={h / 3}
+            fill={shadowColor}
+            opacity={shadowOpacity}
+            listening={false}
+          />
+        </Group>
+      );
+    }
+  }
+
+  // FIX 12: Improved Satin effect with blend mode
+  const satinProps = getSatinProps(layerEffects);
+  if (satinProps) {
+    const dist = (satinProps.satinDistance as number) || 11;
+    const angle = ((satinProps.satinAngle as number) || 19) * Math.PI / 180;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist;
+    const satinColor = (satinProps.satinColor as string) || '#000000';
+    const satinOpacity = ((satinProps.satinOpacity as number) || 50) / 150;
+    const satinBlur = (satinProps.satinBlur as number) || 14;
+    
+    if (obj.type === 'rect' || (obj.shapeType && obj.type === 'rect')) {
+      elements.push(
+        <Group key="satin" clipX={obj.x} clipY={obj.y} clipWidth={w} clipHeight={h}>
+          <Rect
+            x={obj.x + dx}
+            y={obj.y + dy}
+            width={w}
+            height={h}
+            fill={satinColor}
+            opacity={satinOpacity}
+            cornerRadius={obj.cornerRadius || 0}
+            shadowColor={satinColor}
+            shadowBlur={satinBlur}
+            shadowOffsetX={0}
+            shadowOffsetY={0}
+            listening={false}
+          />
+        </Group>
+      );
+    } else if (obj.type === 'ellipse' || obj.type === 'circle') {
+      elements.push(
+        <Group key="satin" clipX={obj.x} clipY={obj.y} clipWidth={w} clipHeight={h}>
+          <Ellipse
+            x={obj.x + w / 2 + dx}
+            y={obj.y + h / 2 + dy}
+            radiusX={w / 2}
+            radiusY={h / 2}
+            fill={satinColor}
+            opacity={satinOpacity}
+            shadowColor={satinColor}
+            shadowBlur={satinBlur}
+            shadowOffsetX={0}
+            shadowOffsetY={0}
+            listening={false}
+          />
+        </Group>
+      );
+    }
+  }
+
+  return elements.length > 0 ? <>{elements}</> : null;
+}
+
 function EditorObjectRenderer({ obj, isSelected, onSelect, layerEffects }: { 
   obj: EditorObject; 
   isSelected: boolean; 
@@ -198,7 +456,6 @@ function EditorObjectRenderer({ obj, isSelected, onSelect, layerEffects }: {
     pushHistory('Transform Object');
   }, [activeLayerId, updateObject, pushHistory]);
 
-  // Get shadow props from layer effects
   const shadowProps = getShadowProps(layerEffects);
   const strokeEffectProps = getStrokeEffectProps(layerEffects);
 
@@ -217,10 +474,8 @@ function EditorObjectRenderer({ obj, isSelected, onSelect, layerEffects }: {
     onTransformEnd: handleTransformEnd,
   };
 
-  // Render stroke effect behind the main shape (for "outside" stroke)
   const renderStrokeEffect = () => {
     if (!strokeEffectProps) return null;
-    // Render a slightly larger version of the shape behind for the stroke effect
     const strokeSize = (layerEffects?.stroke?.size || 3);
     const strokeExpand = layerEffects?.stroke?.position === 'outside' ? strokeSize : 0;
     
@@ -275,25 +530,11 @@ function EditorObjectRenderer({ obj, isSelected, onSelect, layerEffects }: {
             strokeWidth={obj.strokeWidth || 0}
             cornerRadius={obj.cornerRadius || 0}
           />
+          <LayerEffectsOverlay obj={obj} layerEffects={layerEffects} />
         </Group>
       );
 
     case 'circle':
-      return (
-        <Group>
-          {renderStrokeEffect()}
-          <Ellipse
-            {...commonProps}
-            {...shadowProps}
-            radiusX={(obj.width || 100) / 2}
-            radiusY={(obj.height || 100) / 2}
-            fill={obj.fill}
-            stroke={obj.stroke}
-            strokeWidth={obj.strokeWidth || 0}
-          />
-        </Group>
-      );
-
     case 'ellipse':
       return (
         <Group>
@@ -307,6 +548,7 @@ function EditorObjectRenderer({ obj, isSelected, onSelect, layerEffects }: {
             stroke={obj.stroke}
             strokeWidth={obj.strokeWidth || 0}
           />
+          <LayerEffectsOverlay obj={obj} layerEffects={layerEffects} />
         </Group>
       );
 
@@ -361,7 +603,6 @@ function EditorObjectRenderer({ obj, isSelected, onSelect, layerEffects }: {
             const w = obj.width || 100;
             const h = obj.height || 100;
             const direction = obj.gradientDirection || 'horizontal';
-            
             let gradient: CanvasGradient;
             if (direction === 'radial') {
               gradient = context.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) / 2);
@@ -371,10 +612,8 @@ function EditorObjectRenderer({ obj, isSelected, onSelect, layerEffects }: {
               else if (direction === 'diagonal') { x1 = w; y1 = h; }
               gradient = context.createLinearGradient(x0, y0, x1, y1);
             }
-            
             gradient.addColorStop(0, obj.gradientStartColor || '#000000');
             gradient.addColorStop(1, obj.gradientEndColor || '#ffffff');
-            
             context.beginPath();
             context.rect(0, 0, w, h);
             context.fillStyle = gradient;
@@ -406,7 +645,6 @@ function EditorObjectRenderer({ obj, isSelected, onSelect, layerEffects }: {
       return <ImageObjectRenderer obj={obj} commonProps={commonProps} shadowProps={shadowProps} />;
 
     default:
-      // Handle custom shapes via shapeType
       if (obj.shapeType && obj.type === 'rect') {
         const shapeType = obj.shapeType;
         const w = obj.width || 100;
@@ -415,183 +653,67 @@ function EditorObjectRenderer({ obj, isSelected, onSelect, layerEffects }: {
         const cy = h / 2;
         const radius = Math.min(cx, cy);
 
-        switch (shapeType) {
-          case 'triangle':
-            return (
-              <Shape
-                {...commonProps}
-                {...shadowProps}
-                sceneFunc={(context, shape) => {
-                  context.beginPath();
-                  context.moveTo(cx, 0);
-                  context.lineTo(w, h);
-                  context.lineTo(0, h);
-                  context.closePath();
-                  context.fillStrokeShape(shape);
-                }}
-                fill={obj.fill}
-                stroke={obj.stroke}
-                strokeWidth={obj.strokeWidth || 0}
-              />
-            );
+        const shapeRenderers: Record<string, (context: Konva.Context, shape: Konva.Shape) => void> = {
+          'triangle': (ctx, shape) => { ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fillStrokeShape(shape); },
+          'star': (ctx, shape) => { drawStar(ctx, cx, cy, radius, radius * 0.4, 5); ctx.fillStrokeShape(shape); },
+          'diamond': (ctx, shape) => { drawDiamond(ctx, w, h); ctx.fillStrokeShape(shape); },
+          'hexagon': (ctx, shape) => { drawRegularPolygon(ctx, cx, cy, radius, 6); ctx.fillStrokeShape(shape); },
+          'pentagon': (ctx, shape) => { drawRegularPolygon(ctx, cx, cy, radius, 5); ctx.fillStrokeShape(shape); },
+          'octagon': (ctx, shape) => { drawRegularPolygon(ctx, cx, cy, radius, 8); ctx.fillStrokeShape(shape); },
+          'heart': (ctx, shape) => { drawHeart(ctx, cx, cy, w, h); ctx.fillStrokeShape(shape); },
+          'cross': (ctx, shape) => { drawCross(ctx, w, h); ctx.fillStrokeShape(shape); },
+          'arrow-right': (ctx, shape) => { drawArrow(ctx, w, h, 'right'); ctx.fillStrokeShape(shape); },
+          'arrow-left': (ctx, shape) => { drawArrow(ctx, w, h, 'left'); ctx.fillStrokeShape(shape); },
+          'arrow-up': (ctx, shape) => { drawArrow(ctx, w, h, 'up'); ctx.fillStrokeShape(shape); },
+          'arrow-down': (ctx, shape) => { drawArrow(ctx, w, h, 'down'); ctx.fillStrokeShape(shape); },
+        };
 
-          case 'star':
-            return (
-              <Shape
-                {...commonProps}
-                {...shadowProps}
-                sceneFunc={(context, shape) => {
-                  drawStar(context, cx, cy, radius, radius * 0.4, 5);
-                  context.fillStrokeShape(shape);
-                }}
-                fill={obj.fill}
-                stroke={obj.stroke}
-                strokeWidth={obj.strokeWidth || 0}
-              />
-            );
-
-          case 'diamond':
-            return (
-              <Shape
-                {...commonProps}
-                {...shadowProps}
-                sceneFunc={(context, shape) => {
-                  drawDiamond(context, w, h);
-                  context.fillStrokeShape(shape);
-                }}
-                fill={obj.fill}
-                stroke={obj.stroke}
-                strokeWidth={obj.strokeWidth || 0}
-              />
-            );
-
-          case 'hexagon':
-            return (
-              <Shape
-                {...commonProps}
-                {...shadowProps}
-                sceneFunc={(context, shape) => {
-                  drawRegularPolygon(context, cx, cy, radius, 6);
-                  context.fillStrokeShape(shape);
-                }}
-                fill={obj.fill}
-                stroke={obj.stroke}
-                strokeWidth={obj.strokeWidth || 0}
-              />
-            );
-
-          case 'pentagon':
-            return (
-              <Shape
-                {...commonProps}
-                {...shadowProps}
-                sceneFunc={(context, shape) => {
-                  drawRegularPolygon(context, cx, cy, radius, 5);
-                  context.fillStrokeShape(shape);
-                }}
-                fill={obj.fill}
-                stroke={obj.stroke}
-                strokeWidth={obj.strokeWidth || 0}
-              />
-            );
-
-          case 'octagon':
-            return (
-              <Shape
-                {...commonProps}
-                {...shadowProps}
-                sceneFunc={(context, shape) => {
-                  drawRegularPolygon(context, cx, cy, radius, 8);
-                  context.fillStrokeShape(shape);
-                }}
-                fill={obj.fill}
-                stroke={obj.stroke}
-                strokeWidth={obj.strokeWidth || 0}
-              />
-            );
-
-          case 'heart':
-            return (
-              <Shape
-                {...commonProps}
-                {...shadowProps}
-                sceneFunc={(context, shape) => {
-                  drawHeart(context, cx, cy, w, h);
-                  context.fillStrokeShape(shape);
-                }}
-                fill={obj.fill}
-                stroke={obj.stroke}
-                strokeWidth={obj.strokeWidth || 0}
-              />
-            );
-
-          case 'arrow-right':
-          case 'arrow-left':
-          case 'arrow-up':
-          case 'arrow-down':
-            return (
-              <Shape
-                {...commonProps}
-                {...shadowProps}
-                sceneFunc={(context, shape) => {
-                  drawArrow(context, w, h, shapeType.split('-')[1] as 'right' | 'left' | 'up' | 'down');
-                  context.fillStrokeShape(shape);
-                }}
-                fill={obj.fill}
-                stroke={obj.stroke}
-                strokeWidth={obj.strokeWidth || 0}
-              />
-            );
-
-          case 'cross':
-            return (
-              <Shape
-                {...commonProps}
-                {...shadowProps}
-                sceneFunc={(context, shape) => {
-                  drawCross(context, w, h);
-                  context.fillStrokeShape(shape);
-                }}
-                fill={obj.fill}
-                stroke={obj.stroke}
-                strokeWidth={obj.strokeWidth || 0}
-              />
-            );
-
-          case 'rounded-rect':
-            return (
-              <Rect
-                {...commonProps}
-                {...shadowProps}
-                width={w}
-                height={h}
-                fill={obj.fill}
-                stroke={obj.stroke}
-                strokeWidth={obj.strokeWidth || 0}
-                cornerRadius={obj.cornerRadius || Math.min(w, h) / 4}
-              />
-            );
-
-          default:
-            return (
-              <Rect
-                {...commonProps}
-                {...shadowProps}
-                width={w}
-                height={h}
-                fill={obj.fill}
-                stroke={obj.stroke}
-                strokeWidth={obj.strokeWidth || 0}
-                cornerRadius={obj.cornerRadius || 0}
-              />
-            );
+        if (shapeType === 'rounded-rect') {
+          return (
+            <Rect
+              {...commonProps}
+              {...shadowProps}
+              width={w}
+              height={h}
+              fill={obj.fill}
+              stroke={obj.stroke}
+              strokeWidth={obj.strokeWidth || 0}
+              cornerRadius={obj.cornerRadius || Math.min(w, h) / 4}
+            />
+          );
         }
+
+        const sceneFunc = shapeRenderers[shapeType];
+        if (sceneFunc) {
+          return (
+            <Shape
+              {...commonProps}
+              {...shadowProps}
+              sceneFunc={sceneFunc}
+              fill={obj.fill}
+              stroke={obj.stroke}
+              strokeWidth={obj.strokeWidth || 0}
+            />
+          );
+        }
+
+        return (
+          <Rect
+            {...commonProps}
+            {...shadowProps}
+            width={w}
+            height={h}
+            fill={obj.fill}
+            stroke={obj.stroke}
+            strokeWidth={obj.strokeWidth || 0}
+            cornerRadius={obj.cornerRadius || 0}
+          />
+        );
       }
       return null;
   }
 }
 
-// Transformer wrapper component
 function TransformerComponent({ selectedIds }: { selectedIds: string[] }) {
   const trRef = useRef<Konva.Transformer>(null);
 
@@ -599,7 +721,6 @@ function TransformerComponent({ selectedIds }: { selectedIds: string[] }) {
     if (!trRef.current) return;
     const stage = trRef.current.getStage();
     if (!stage) return;
-
     const nodes: Konva.Node[] = [];
     for (const id of selectedIds) {
       const node = stage.findOne(`#${id}`);
@@ -624,20 +745,29 @@ function TransformerComponent({ selectedIds }: { selectedIds: string[] }) {
   );
 }
 
-// Marquee/selection overlay component
-function MarqueeOverlay({ startPos, endPos }: { startPos: { x: number; y: number } | null; endPos: { x: number; y: number } | null }) {
-  if (!startPos || !endPos) return null;
-  const x = Math.min(startPos.x, endPos.x);
-  const y = Math.min(startPos.y, endPos.y);
-  const w = Math.abs(endPos.x - startPos.x);
-  const h = Math.abs(endPos.y - startPos.y);
-
+// Selection overlay component
+function SelectionOverlay({ selection }: { selection: { type: string; x: number; y: number; width: number; height: number } | null }) {
+  if (!selection) return null;
+  if (selection.type === 'ellipse') {
+    return (
+      <Ellipse
+        x={selection.x + selection.width / 2}
+        y={selection.y + selection.height / 2}
+        radiusX={selection.width / 2}
+        radiusY={selection.height / 2}
+        stroke="#10b981"
+        strokeWidth={1}
+        dash={[4, 4]}
+        listening={false}
+      />
+    );
+  }
   return (
     <Rect
-      x={x}
-      y={y}
-      width={w}
-      height={h}
+      x={selection.x}
+      y={selection.y}
+      width={selection.width}
+      height={selection.height}
       stroke="#10b981"
       strokeWidth={1}
       dash={[4, 4]}
@@ -646,43 +776,29 @@ function MarqueeOverlay({ startPos, endPos }: { startPos: { x: number; y: number
   );
 }
 
-// Measure overlay component
+// Measure overlay
 function MeasureOverlay({ startPos, endPos }: { startPos: { x: number; y: number } | null; endPos: { x: number; y: number } | null }) {
   if (!startPos || !endPos) return null;
   const dx = endPos.x - startPos.x;
   const dy = endPos.y - startPos.y;
   const dist = Math.round(Math.sqrt(dx * dx + dy * dy));
-
   return (
     <>
-      <Line
-        points={[startPos.x, startPos.y, endPos.x, endPos.y]}
-        stroke="#10b981"
-        strokeWidth={1}
-        dash={[4, 4]}
-        listening={false}
-      />
-      <Text
-        x={(startPos.x + endPos.x) / 2 - 20}
-        y={(startPos.y + endPos.y) / 2 - 10}
-        text={`${dist}px`}
-        fontSize={12}
-        fill="#10b981"
-        listening={false}
-      />
+      <Line points={[startPos.x, startPos.y, endPos.x, endPos.y]} stroke="#10b981" strokeWidth={1} dash={[4, 4]} listening={false} />
+      <Text x={(startPos.x + endPos.x) / 2 - 20} y={(startPos.y + endPos.y) / 2 - 10} text={`${dist}px`} fontSize={12} fill="#10b981" listening={false} />
     </>
   );
 }
 
-// Crop overlay component
-function CropOverlay({ cropStart, cropEnd, canvasWidth, canvasHeight }: { 
+// Crop overlay - with listening={false} so it doesn't capture mouse events
+function CropOverlay({ cropStart, cropEnd, canvasWidth, canvasHeight, cropMode }: { 
   cropStart: { x: number; y: number } | null; 
   cropEnd: { x: number; y: number } | null;
   canvasWidth: number;
   canvasHeight: number;
+  cropMode: 'rect' | 'circle';
 }) {
   if (!cropStart || !cropEnd) return null;
-  
   const x1 = Math.max(0, Math.min(cropStart.x, cropEnd.x));
   const y1 = Math.max(0, Math.min(cropStart.y, cropEnd.y));
   const x2 = Math.min(canvasWidth, Math.max(cropStart.x, cropEnd.x));
@@ -692,31 +808,25 @@ function CropOverlay({ cropStart, cropEnd, canvasWidth, canvasHeight }: {
 
   return (
     <>
-      {/* Dark overlay outside crop area */}
       <Rect x={0} y={0} width={canvasWidth} height={y1} fill="rgba(0,0,0,0.5)" listening={false} />
       <Rect x={0} y={y2} width={canvasWidth} height={canvasHeight - y2} fill="rgba(0,0,0,0.5)" listening={false} />
       <Rect x={0} y={y1} width={x1} height={h} fill="rgba(0,0,0,0.5)" listening={false} />
       <Rect x={x2} y={y1} width={canvasWidth - x2} height={h} fill="rgba(0,0,0,0.5)" listening={false} />
-      {/* Crop border */}
-      <Rect
-        x={x1}
-        y={y1}
-        width={w}
-        height={h}
-        stroke="#ffffff"
-        strokeWidth={1}
-        dash={[4, 4]}
-        listening={false}
-      />
-      {/* Dimension text */}
-      <Text
-        x={x1}
-        y={y1 - 16}
-        text={`${Math.round(w)} × ${Math.round(h)}`}
-        fontSize={12}
-        fill="#ffffff"
-        listening={false}
-      />
+      {cropMode === 'circle' ? (
+        <Ellipse
+          x={x1 + w / 2}
+          y={y1 + h / 2}
+          radiusX={w / 2}
+          radiusY={h / 2}
+          stroke="#ffffff"
+          strokeWidth={1}
+          dash={[4, 4]}
+          listening={false}
+        />
+      ) : (
+        <Rect x={x1} y={y1} width={w} height={h} stroke="#ffffff" strokeWidth={1} dash={[4, 4]} listening={false} />
+      )}
+      <Text x={x1} y={y1 - 16} text={`${Math.round(w)} × ${Math.round(h)}`} fontSize={12} fill="#ffffff" listening={false} />
     </>
   );
 }
@@ -726,68 +836,76 @@ function SnapGuidesOverlay({ guides }: { guides: SnapGuide[] }) {
   if (guides.length === 0) return null;
   return (
     <>
-      {guides.map((guide, i) => {
-        if (guide.type === 'horizontal') {
-          return (
-            <Line
-              key={`snap-h-${i}`}
-              points={[-10000, guide.position, 10000, guide.position]}
-              stroke="#ff4081"
-              strokeWidth={1}
-              dash={[4, 4]}
-              listening={false}
-            />
-          );
-        } else {
-          return (
-            <Line
-              key={`snap-v-${i}`}
-              points={[guide.position, -10000, guide.position, 10000]}
-              stroke="#ff4081"
-              strokeWidth={1}
-              dash={[4, 4]}
-              listening={false}
-            />
-          );
-        }
-      })}
+      {guides.map((guide, i) => (
+        guide.type === 'horizontal' ? (
+          <Line key={`snap-h-${i}`} points={[-10000, guide.position, 10000, guide.position]} stroke="#ff4081" strokeWidth={1} dash={[4, 4]} listening={false} />
+        ) : (
+          <Line key={`snap-v-${i}`} points={[guide.position, -10000, guide.position, 10000]} stroke="#ff4081" strokeWidth={1} dash={[4, 4]} listening={false} />
+        )
+      ))}
     </>
   );
 }
 
-// Pen tool preview
-function PenPreview({ anchors, isClosed }: { anchors: { x: number; y: number }[]; isClosed: boolean }) {
+// Pen tool preview with bezier support
+function PenPreview({ anchors }: { anchors: PathAnchor[] }) {
   if (anchors.length < 1) return null;
-  
-  const points: number[] = [];
-  for (const a of anchors) {
-    points.push(a.x, a.y);
+
+  // Build SVG path from anchors with handles
+  let pathData = '';
+  if (anchors.length >= 1) {
+    pathData = `M ${anchors[0].x} ${anchors[0].y}`;
+    for (let i = 1; i < anchors.length; i++) {
+      const prev = anchors[i - 1];
+      const curr = anchors[i];
+      if (prev.handleOutX !== undefined && prev.handleOutY !== undefined && curr.handleInX !== undefined && curr.handleInY !== undefined) {
+        pathData += ` C ${prev.handleOutX} ${prev.handleOutY}, ${curr.handleInX} ${curr.handleInY}, ${curr.x} ${curr.y}`;
+      } else if (prev.handleOutX !== undefined && prev.handleOutY !== undefined) {
+        pathData += ` Q ${prev.handleOutX} ${prev.handleOutY}, ${curr.x} ${curr.y}`;
+      } else {
+        pathData += ` L ${curr.x} ${curr.y}`;
+      }
+    }
   }
-  
+
   return (
     <>
-      <Line
-        points={points}
-        stroke="#10b981"
-        strokeWidth={1}
-        dash={[4, 4]}
-        lineCap="round"
-        lineJoin="round"
-        listening={false}
-      />
-      {/* Anchor points */}
-      {anchors.map((a, i) => (
-        <Rect
-          key={`anchor-${i}`}
-          x={a.x - 3}
-          y={a.y - 3}
-          width={6}
-          height={6}
-          fill={i === 0 ? '#10b981' : '#ffffff'}
+      {pathData && (
+        <Path
+          data={pathData}
           stroke="#10b981"
           strokeWidth={1}
+          dash={[4, 4]}
           listening={false}
         />
+      )}
+      {/* Anchor points and handles */}
+      {anchors.map((a, i) => (
+        <React.Fragment key={`anchor-${i}`}>
+          <Rect
+            x={a.x - 3}
+            y={a.y - 3}
+            width={6}
+            height={6}
+            fill={i === 0 ? '#10b981' : '#ffffff'}
+            stroke="#10b981"
+            strokeWidth={1}
+            listening={false}
+          />
+          {/* Handle lines */}
+          {a.handleInX !== undefined && a.handleInY !== undefined && (
+            <>
+              <Line points={[a.handleInX, a.handleInY, a.x, a.y]} stroke="#10b981" strokeWidth={0.5} listening={false} />
+              <Ellipse x={a.handleInX} y={a.handleInY} radiusX={3} radiusY={3} fill="#10b981" listening={false} />
+            </>
+          )}
+          {a.handleOutX !== undefined && a.handleOutY !== undefined && (
+            <>
+              <Line points={[a.x, a.y, a.handleOutX, a.handleOutY]} stroke="#10b981" strokeWidth={0.5} listening={false} />
+              <Ellipse x={a.handleOutX} y={a.handleOutY} radiusX={3} radiusY={3} fill="#10b981" listening={false} />
+            </>
+          )}
+        </React.Fragment>
       ))}
     </>
   );
@@ -800,20 +918,25 @@ export default function EditorCanvas() {
   const [isPanning, setIsPanning] = useState(false);
   const drawingIdRef = useRef<string | null>(null);
   const shapeStartRef = useRef<{ x: number; y: number } | null>(null);
-  const [marqueeStart, setMarqueeStart] = useState<{ x: number; y: number } | null>(null);
-  const [marqueeEnd, setMarqueeEnd] = useState<{ x: number; y: number } | null>(null);
   const [measureStart, setMeasureStart] = useState<{ x: number; y: number } | null>(null);
   const [measureEnd, setMeasureEnd] = useState<{ x: number; y: number } | null>(null);
+  // Selection tools state
+  const [selectionStart, setSelectionStart] = useState<{ x: number; y: number } | null>(null);
+  const [selectionEnd, setSelectionEnd] = useState<{ x: number; y: number } | null>(null);
   // Crop state
   const [cropStart, setCropStart] = useState<{ x: number; y: number } | null>(null);
   const [cropEnd, setCropEnd] = useState<{ x: number; y: number } | null>(null);
-  // Pen state
-  const [penAnchors, setPenAnchors] = useState<{ x: number; y: number }[]>([]);
+  // Pen state with handles
+  const [penAnchors, setPenAnchors] = useState<PathAnchor[]>([]);
+  const [penDragging, setPenDragging] = useState(false);
   // Clone stamp state
   const [cloneOffset, setCloneOffset] = useState<{ x: number; y: number } | null>(null);
   // Slice state
   const [sliceStart, setSliceStart] = useState<{ x: number; y: number } | null>(null);
   const [sliceEnd, setSliceEnd] = useState<{ x: number; y: number } | null>(null);
+  // Text editing state
+  const [editingTextId, setEditingTextId] = useState<string | null>(null);
+  const [editTextValue, setEditTextValue] = useState('');
 
   const canvas = useEditorStore((s) => s.canvas);
   const layers = useEditorStore((s) => s.layers);
@@ -830,9 +953,9 @@ export default function EditorCanvas() {
   const updateCanvas = useEditorStore((s) => s.updateCanvas);
   const addObjectToLayer = useEditorStore((s) => s.addObjectToLayer);
   const updateObject = useEditorStore((s) => s.updateObject);
+  const removeObject = useEditorStore((s) => s.removeObject);
   const pushHistory = useEditorStore((s) => s.pushHistory);
   const setIsDrawing = useEditorStore((s) => s.setIsDrawing);
-  const setActiveTool = useEditorStore((s) => s.setActiveTool);
   const setMousePos = useEditorStore((s) => s.setMousePos);
   const showGrid = useEditorStore((s) => s.showGrid);
   const activeShapeType = useEditorStore((s) => s.activeShapeType);
@@ -842,19 +965,19 @@ export default function EditorCanvas() {
   const applyCrop = useEditorStore((s) => s.applyCrop);
   const showSnapGuides = useEditorStore((s) => s.showSnapGuides);
   const setSnapGuides = useEditorStore((s) => s.setSnapGuides);
+  const setSelection = useEditorStore((s) => s.setSelection);
+  const clearSelection = useEditorStore((s) => s.clearSelection);
+  const cropMode = useEditorStore((s) => s.cropMode);
+  const brushHardness = useEditorStore((s) => s.brushHardness);
+  const brushOpacity = useEditorStore((s) => s.brushOpacity);
 
   // Container resize observer
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
     const updateSize = () => {
-      setContainerSize({
-        width: container.clientWidth,
-        height: container.clientHeight,
-      });
+      setContainerSize({ width: container.clientWidth, height: container.clientHeight });
     };
-
     updateSize();
     const observer = new ResizeObserver(updateSize);
     observer.observe(container);
@@ -867,224 +990,238 @@ export default function EditorCanvas() {
       const scaleX = (containerSize.width - 40) / canvas.width;
       const scaleY = (containerSize.height - 40) / canvas.height;
       const zoom = Math.min(scaleX, scaleY, 1);
-      updateCanvas({
-        zoom,
-        offsetX: (containerSize.width - canvas.width * zoom) / 2,
-        offsetY: (containerSize.height - canvas.height * zoom) / 2,
-      });
+      updateCanvas({ zoom, offsetX: (containerSize.width - canvas.width * zoom) / 2, offsetY: (containerSize.height - canvas.height * zoom) / 2 });
     }
   }, [containerSize.width, containerSize.height, canvas.width, canvas.height]);
-
-  // Compute snap guides
-  const computeSnapGuides = useCallback((dragPos: { x: number; y: number }, objWidth: number, objHeight: number): SnapGuide[] => {
-    if (!showSnapGuides) return [];
-    const guides: SnapGuide[] = [];
-    const threshold = 5;
-    const cx = dragPos.x + objWidth / 2;
-    const cy = dragPos.y + objHeight / 2;
-    const canvasCx = canvas.width / 2;
-    const canvasCy = canvas.height / 2;
-
-    // Canvas center guides
-    if (Math.abs(cx - canvasCx) < threshold) {
-      guides.push({ type: 'vertical', position: canvasCx });
-    }
-    if (Math.abs(cy - canvasCy) < threshold) {
-      guides.push({ type: 'horizontal', position: canvasCy });
-    }
-
-    // Edge alignment
-    if (Math.abs(dragPos.x) < threshold) {
-      guides.push({ type: 'vertical', position: 0 });
-    }
-    if (Math.abs(dragPos.y) < threshold) {
-      guides.push({ type: 'horizontal', position: 0 });
-    }
-    if (Math.abs(dragPos.x + objWidth - canvas.width) < threshold) {
-      guides.push({ type: 'vertical', position: canvas.width });
-    }
-    if (Math.abs(dragPos.y + objHeight - canvas.height) < threshold) {
-      guides.push({ type: 'horizontal', position: canvas.height });
-    }
-
-    return guides;
-  }, [showSnapGuides, canvas.width, canvas.height]);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't handle shortcuts if user is typing in an input
       if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
 
       if (e.ctrlKey || e.metaKey) {
         switch (e.key) {
-          case 'z':
-            e.preventDefault();
-            if (e.shiftKey) {
-              useEditorStore.getState().redo();
-            } else {
-              useEditorStore.getState().undo();
-            }
-            break;
-          case 'y':
-            e.preventDefault();
-            useEditorStore.getState().redo();
-            break;
-          case 'a':
-            e.preventDefault();
-            const allIds = useEditorStore.getState().layers.flatMap((l) => l.objects.map((o) => o.id));
-            setSelectedObjectIds(allIds);
-            break;
-          case 'd':
-            e.preventDefault();
-            setSelectedObjectIds([]);
-            break;
+          case 'z': e.preventDefault(); useEditorStore.getState().undo(); break;
+          case 'y': e.preventDefault(); useEditorStore.getState().redo(); break;
+          case 'a': e.preventDefault(); setSelectedObjectIds(useEditorStore.getState().layers.flatMap((l) => l.objects.map((o) => o.id))); break;
+          case 'd': e.preventDefault(); setSelectedObjectIds([]); break;
         }
         return;
       }
 
+      const brushTypeTools = ['brush', 'eraser', 'dodge', 'burn', 'sponge', 'blur-brush', 'sharpen-brush', 'clone-stamp'];
+      
       switch (e.key) {
         case 'Delete':
         case 'Backspace': {
           const state = useEditorStore.getState();
-          const ids = state.selectedObjectIds;
-          if (ids.length > 0) {
+          if (state.selectedObjectIds.length > 0) {
             state.pushHistory('Delete');
             for (const layer of state.layers) {
-              for (const id of ids) {
-                state.removeObject(layer.id, id);
-              }
+              for (const id of state.selectedObjectIds) state.removeObject(layer.id, id);
             }
           }
           break;
         }
-        case 'v': setActiveTool('select'); break;
-        case 'm': setActiveTool('move'); break;
-        case 'h': setActiveTool('hand'); break;
-        case 'z': setActiveTool('zoom'); break;
-        case 'b': setActiveTool('brush'); break;
-        case 'e': setActiveTool('eraser'); break;
-        case 'g': setActiveTool('fill'); break;
-        case 'i': setActiveTool('eyedropper'); break;
-        case 't': setActiveTool('text'); break;
-        case 'u': setActiveTool('shape'); break;
-        case 'l': setActiveTool('line'); break;
-        case 'c': setActiveTool('crop'); break;
-        case 'p': setActiveTool('pen'); break;
+        case 'v': useEditorStore.getState().setActiveTool('select'); break;
+        case 'm': useEditorStore.getState().setActiveTool('move'); break;
+        case 'h': useEditorStore.getState().setActiveTool('hand'); break;
+        case 'z': useEditorStore.getState().setActiveTool('zoom'); break;
+        case 'b': useEditorStore.getState().setActiveTool('brush'); break;
+        case 'e': useEditorStore.getState().setActiveTool('eraser'); break;
+        case 'g': useEditorStore.getState().setActiveTool('fill'); break;
+        case 'i': useEditorStore.getState().setActiveTool('eyedropper'); break;
+        case 't': useEditorStore.getState().setActiveTool('text'); break;
+        case 'u': useEditorStore.getState().setActiveTool('shape'); break;
+        case 'l': useEditorStore.getState().setActiveTool('line'); break;
+        case 'c': useEditorStore.getState().setActiveTool('crop'); break;
+        case 'p': useEditorStore.getState().setActiveTool('pen'); break;
         case 'x': useEditorStore.getState().swapColors(); break;
-        case ' ':
-          e.preventDefault();
-          setIsPanning(true);
+        case '[': {
+          // FIX 6: Decrease brush/eraser size with [ key
+          if (brushTypeTools.includes(activeTool)) {
+            if (activeTool === 'eraser') {
+              const newSize = Math.max(1, useEditorStore.getState().eraserSize - 5);
+              useEditorStore.getState().setEraserSize(newSize);
+            } else {
+              const newSize = Math.max(1, useEditorStore.getState().brushSize - 5);
+              useEditorStore.getState().setBrushSize(newSize);
+            }
+          }
           break;
+        }
+        case ']': {
+          // FIX 6: Increase brush/eraser size with ] key
+          if (brushTypeTools.includes(activeTool)) {
+            if (activeTool === 'eraser') {
+              const newSize = Math.min(500, useEditorStore.getState().eraserSize + 5);
+              useEditorStore.getState().setEraserSize(newSize);
+            } else {
+              const newSize = Math.min(500, useEditorStore.getState().brushSize + 5);
+              useEditorStore.getState().setBrushSize(newSize);
+            }
+          }
+          break;
+        }
+        case ' ': e.preventDefault(); setIsPanning(true); break;
         case 'Escape':
-          // Cancel current operation
-          setCropStart(null);
-          setCropEnd(null);
+          setCropStart(null); setCropEnd(null);
           setPenAnchors([]);
-          setSliceStart(null);
-          setSliceEnd(null);
+          setSliceStart(null); setSliceEnd(null);
+          clearSelection();
+          setEditingTextId(null);
           break;
         case 'Enter':
-          // Apply crop if in crop mode
-          if (activeTool === 'crop' && cropStart && cropEnd) {
+          if ((activeTool === 'crop' || activeTool === 'circle-crop') && cropStart && cropEnd) {
             const x = Math.min(cropStart.x, cropEnd.x);
             const y = Math.min(cropStart.y, cropEnd.y);
             const w = Math.abs(cropEnd.x - cropStart.x);
             const h = Math.abs(cropEnd.y - cropStart.y);
-            if (w > 1 && h > 1) {
-              applyCrop(x, y, w, h);
-              setCropStart(null);
-              setCropEnd(null);
-            }
+            if (w > 1 && h > 1) { applyCrop(x, y, w, h); setCropStart(null); setCropEnd(null); }
           }
-          // Finish pen path
-          if (activeTool === 'pen' && penAnchors.length >= 2) {
-            finishPenPath();
-          }
+          if (activeTool === 'pen' && penAnchors.length >= 2) finishPenPath();
           break;
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === ' ') {
-        setIsPanning(false);
-      }
+      if (e.key === ' ') setIsPanning(false);
     };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, [setActiveTool, setSelectedObjectIds, activeTool, cropStart, cropEnd, penAnchors]);
+    return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); };
+  }, [activeTool, cropStart, cropEnd, penAnchors, brushSize, clearSelection]);
 
   const getPointerPos = useCallback(() => {
     const stage = stageRef.current;
     if (!stage) return { x: 0, y: 0 };
     const pos = stage.getPointerPosition();
     if (!pos) return { x: 0, y: 0 };
-    return {
-      x: (pos.x - canvas.offsetX) / canvas.zoom,
-      y: (pos.y - canvas.offsetY) / canvas.zoom,
-    };
+    return { x: (pos.x - canvas.offsetX) / canvas.zoom, y: (pos.y - canvas.offsetY) / canvas.zoom };
   }, [canvas.offsetX, canvas.offsetY, canvas.zoom]);
 
-  // Finish pen path - create a path object
+  // FIX 5: Finish pen path with bezier support
   const finishPenPath = useCallback(() => {
     if (penAnchors.length < 2 || !activeLayerId) return;
     
-    // Build SVG path data from anchors
     const first = penAnchors[0];
     let pathData = `M ${first.x} ${first.y}`;
     for (let i = 1; i < penAnchors.length; i++) {
-      pathData += ` L ${penAnchors[i].x} ${penAnchors[i].y}`;
+      const prev = penAnchors[i - 1];
+      const curr = penAnchors[i];
+      if (prev.handleOutX !== undefined && prev.handleOutY !== undefined && curr.handleInX !== undefined && curr.handleInY !== undefined) {
+        pathData += ` C ${prev.handleOutX} ${prev.handleOutY}, ${curr.handleInX} ${curr.handleInY}, ${curr.x} ${curr.y}`;
+      } else if (prev.handleOutX !== undefined && prev.handleOutY !== undefined) {
+        pathData += ` Q ${prev.handleOutX} ${prev.handleOutY}, ${curr.x} ${curr.y}`;
+      } else {
+        pathData += ` L ${curr.x} ${curr.y}`;
+      }
     }
-    // Close the path if near first point
+    
     const last = penAnchors[penAnchors.length - 1];
     const dist = Math.sqrt((last.x - first.x) ** 2 + (last.y - first.y) ** 2);
-    if (dist < 20 || penAnchors.length > 3) {
-      pathData += ' Z';
-    }
+    if (dist < 20 || penAnchors.length > 3) pathData += ' Z';
 
-    const id = uuidv4();
     const pathObj: EditorObject = {
-      id,
+      id: uuidv4(),
       type: 'path',
-      x: 0,
-      y: 0,
+      x: 0, y: 0,
       pathData,
       fill: foregroundColor,
       stroke: foregroundColor,
       strokeWidth: 2,
       opacity: 100,
-      pathAnchors: penAnchors.map(a => ({ x: a.x, y: a.y })),
+      pathAnchors: penAnchors.map(a => ({ x: a.x, y: a.y, handleInX: a.handleInX, handleInY: a.handleInY, handleOutX: a.handleOutX, handleOutY: a.handleOutY })),
     };
     addObjectToLayer(activeLayerId, pathObj);
     pushHistory('Draw Path');
     setPenAnchors([]);
   }, [penAnchors, activeLayerId, foregroundColor, addObjectToLayer, pushHistory]);
 
+  // FIX 7: Apply effect brush - improved with full canvas approach
+  const applyEffectBrush = useCallback(async (strokeObj: EditorObject, toolType: string) => {
+    if (!activeLayerId) return;
+    const pts = strokeObj.points || [];
+    if (pts.length < 2) return;
+    
+    const pad = (strokeObj.brushSize || 5);
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (let i = 0; i < pts.length; i += 2) {
+      minX = Math.min(minX, pts[i]);
+      minY = Math.min(minY, pts[i + 1]);
+      maxX = Math.max(maxX, pts[i]);
+      maxY = Math.max(maxY, pts[i + 1]);
+    }
+    minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+    // Clamp to canvas bounds
+    minX = Math.max(0, Math.floor(minX));
+    minY = Math.max(0, Math.floor(minY));
+    maxX = Math.min(canvas.width, Math.ceil(maxX));
+    maxY = Math.min(canvas.height, Math.ceil(maxY));
+    const bw = maxX - minX;
+    const bh = maxY - minY;
+    if (bw <= 0 || bh <= 0) return;
+
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    try {
+      // Get full stage canvas first, then extract the region
+      const fullStageCanvas = stage.toCanvas({ pixelRatio: 1 });
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = bw;
+      tempCanvas.height = bh;
+      const ctx = tempCanvas.getContext('2d')!;
+      // Account for zoom and offset when extracting from the stage canvas
+      const sx = minX * canvas.zoom + canvas.offsetX;
+      const sy = minY * canvas.zoom + canvas.offsetY;
+      const sw = bw * canvas.zoom;
+      const sh = bh * canvas.zoom;
+      ctx.drawImage(fullStageCanvas, sx, sy, sw, sh, 0, 0, bw, bh);
+      
+      let imageData = ctx.getImageData(0, 0, bw, bh);
+      switch (toolType) {
+        case 'blur-brush': imageData = applyBlur(imageData, 3); break;
+        case 'sharpen-brush': imageData = applySharpen(imageData, 50); break;
+        case 'dodge': imageData = adjustBrightness(imageData, 30); break;
+        case 'burn': imageData = adjustBrightness(imageData, -30); break;
+        case 'sponge': imageData = adjustSaturation(imageData, 30); break;
+      }
+      ctx.putImageData(imageData, 0, 0);
+
+      // Remove original invisible stroke, add filtered image
+      removeObject(activeLayerId, strokeObj.id);
+      const imgObj: EditorObject = {
+        id: uuidv4(),
+        type: 'image',
+        x: minX,
+        y: minY,
+        width: bw,
+        height: bh,
+        imageSrc: tempCanvas.toDataURL('image/png'),
+        opacity: 100,
+      };
+      addObjectToLayer(activeLayerId, imgObj);
+    } catch {
+      // If effect fails, remove the invisible stroke
+      removeObject(activeLayerId, strokeObj.id);
+    }
+  }, [activeLayerId, addObjectToLayer, removeObject, canvas.width, canvas.height, canvas.zoom, canvas.offsetX, canvas.offsetY]);
+
   const handleMouseDown = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     const pos = getPointerPos();
     const target = e.target;
 
-    // Handle hand tool panning
-    if (activeTool === 'hand' || isPanning) {
-      return;
-    }
+    if (activeTool === 'hand' || isPanning) return;
 
-    // Handle zoom tool
     if (activeTool === 'zoom') {
-      if (e.evt.shiftKey) {
-        useEditorStore.getState().zoomOut();
-      } else {
-        useEditorStore.getState().zoomIn();
-      }
+      if (e.evt.shiftKey) useEditorStore.getState().zoomOut();
+      else useEditorStore.getState().zoomIn();
       return;
     }
 
-    // Handle select tool
+    // Selection tools
     if (activeTool === 'select' || activeTool === 'move') {
       if (target === e.target.getStage()) {
         setSelectedObjectIds([]);
@@ -1093,11 +1230,7 @@ export default function EditorCanvas() {
       const id = target.id();
       if (id) {
         if (e.evt.shiftKey) {
-          setSelectedObjectIds(
-            selectedObjectIds.includes(id)
-              ? selectedObjectIds.filter((i) => i !== id)
-              : [...selectedObjectIds, id]
-          );
+          setSelectedObjectIds(selectedObjectIds.includes(id) ? selectedObjectIds.filter((i) => i !== id) : [...selectedObjectIds, id]);
         } else {
           setSelectedObjectIds([id]);
         }
@@ -1105,60 +1238,94 @@ export default function EditorCanvas() {
       return;
     }
 
-    // Handle marquee tool
-    if (activeTool === 'marquee') {
-      setMarqueeStart(pos);
-      setMarqueeEnd(pos);
+    // FIX 1: Rectangular marquee selection
+    if (activeTool === 'rect-select') {
+      setSelectionStart(pos);
+      setSelectionEnd(pos);
       return;
     }
 
-    // Handle measure tool
-    if (activeTool === 'measure') {
-      setMeasureStart(pos);
-      setMeasureEnd(pos);
+    // FIX 1: Elliptical marquee selection
+    if (activeTool === 'ellipse-select') {
+      setSelectionStart(pos);
+      setSelectionEnd(pos);
       return;
     }
 
-    // Handle crop tool
-    if (activeTool === 'crop') {
-      setCropStart(pos);
-      setCropEnd(pos);
+    // FIX 1: Magic wand selection
+    if (activeTool === 'magic-wand') {
+      const stage = stageRef.current;
+      if (!stage) return;
+      try {
+        const pixelRatio = 1;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width * pixelRatio;
+        tempCanvas.height = canvas.height * pixelRatio;
+        const ctx = tempCanvas.getContext('2d');
+        if (ctx) {
+          const stageCanvas = stage.toCanvas({ pixelRatio });
+          ctx.drawImage(stageCanvas, 0, 0);
+          const startX = Math.round(pos.x * pixelRatio);
+          const startY = Math.round(pos.y * pixelRatio);
+          if (startX >= 0 && startX < tempCanvas.width && startY >= 0 && startY < tempCanvas.height) {
+            const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            const startIdx = (startY * tempCanvas.width + startX) * 4;
+            const startR = imageData.data[startIdx];
+            const startG = imageData.data[startIdx + 1];
+            const startB = imageData.data[startIdx + 2];
+            const tolerance = fillTolerance;
+            // Simple flood fill to find selection bounds
+            const visited = new Uint8Array(tempCanvas.width * tempCanvas.height);
+            const stack: [number, number][] = [[startX, startY]];
+            let minX = startX, minY = startY, maxX = startX, maxY = startY;
+            while (stack.length > 0) {
+              const [sx, sy] = stack.pop()!;
+              if (sx < 0 || sx >= tempCanvas.width || sy < 0 || sy >= tempCanvas.height) continue;
+              const idx = sy * tempCanvas.width + sx;
+              if (visited[idx]) continue;
+              visited[idx] = 1;
+              const pixIdx = idx * 4;
+              const dr = Math.abs(imageData.data[pixIdx] - startR);
+              const dg = Math.abs(imageData.data[pixIdx + 1] - startG);
+              const db = Math.abs(imageData.data[pixIdx + 2] - startB);
+              if (dr + dg + db > tolerance * 3) continue;
+              minX = Math.min(minX, sx); minY = Math.min(minY, sy);
+              maxX = Math.max(maxX, sx); maxY = Math.max(maxY, sy);
+              stack.push([sx + 1, sy], [sx - 1, sy], [sx, sy + 1], [sx, sy - 1]);
+            }
+            setSelection({ type: 'magic-wand', x: minX / pixelRatio, y: minY / pixelRatio, width: (maxX - minX) / pixelRatio, height: (maxY - minY) / pixelRatio });
+          }
+        }
+      } catch { /* cross-origin */ }
       return;
     }
 
-    // Handle slice tool
-    if (activeTool === 'slice') {
-      setSliceStart(pos);
-      setSliceEnd(pos);
-      return;
-    }
+    if (activeTool === 'measure') { setMeasureStart(pos); setMeasureEnd(pos); return; }
+    if (activeTool === 'crop' || activeTool === 'circle-crop') { setCropStart(pos); setCropEnd(pos); return; }
+    if (activeTool === 'slice') { setSliceStart(pos); setSliceEnd(pos); return; }
 
-    // Handle pen tool
+    // FIX 4: Pen tool - click for straight points, click+drag for curves
     if (activeTool === 'pen') {
-      // Check if clicking near the first point to close the path
       if (penAnchors.length >= 3) {
         const first = penAnchors[0];
         const dist = Math.sqrt((pos.x - first.x) ** 2 + (pos.y - first.y) ** 2);
-        if (dist < 15) {
-          finishPenPath();
-          return;
-        }
+        if (dist < 15) { finishPenPath(); return; }
       }
       setPenAnchors(prev => [...prev, { x: pos.x, y: pos.y }]);
+      setPenDragging(true);
+      // Store the mousedown position for drag detection
+      shapeStartRef.current = pos;
       return;
     }
 
-    // Handle brush/eraser tool
+    // Brush/eraser
     if (activeTool === 'brush' || activeTool === 'eraser') {
       if (!activeLayerId) return;
       setIsDrawing(true);
       const id = uuidv4();
       drawingIdRef.current = id;
       const brushObj: EditorObject = {
-        id,
-        type: 'brush-stroke',
-        x: 0,
-        y: 0,
+        id, type: 'brush-stroke', x: 0, y: 0,
         points: [pos.x, pos.y],
         brushSize: activeTool === 'eraser' ? eraserSize : brushSize,
         brushColor: activeTool === 'eraser' ? 'eraser' : foregroundColor,
@@ -1168,42 +1335,27 @@ export default function EditorCanvas() {
       return;
     }
 
-    // Handle dodge/burn/sponge/blur-brush/sharpen-brush
-    if (activeTool === 'dodge' || activeTool === 'burn' || activeTool === 'sponge' || activeTool === 'blur-brush' || activeTool === 'sharpen-brush') {
+    // FIX 7: Effect brushes (dodge/burn/sponge/blur/sharpen) - use transparent stroke
+    if (['dodge', 'burn', 'sponge', 'blur-brush', 'sharpen-brush'].includes(activeTool)) {
       if (!activeLayerId) return;
       setIsDrawing(true);
       const id = uuidv4();
       drawingIdRef.current = id;
-      let brushColor = foregroundColor;
-      if (activeTool === 'dodge') brushColor = 'rgba(255,255,255,0.3)';
-      else if (activeTool === 'burn') brushColor = 'rgba(0,0,0,0.3)';
-      else if (activeTool === 'sponge') brushColor = foregroundColor;
-      else if (activeTool === 'blur-brush') brushColor = foregroundColor;
-      else if (activeTool === 'sharpen-brush') brushColor = foregroundColor;
-
+      // Use transparent color so stroke is invisible during drawing
       const brushObj: EditorObject = {
-        id,
-        type: 'brush-stroke',
-        x: 0,
-        y: 0,
+        id, type: 'brush-stroke', x: 0, y: 0,
         points: [pos.x, pos.y],
-        brushSize: brushSize,
-        brushColor,
-        opacity: activeTool === 'dodge' || activeTool === 'burn' ? 30 : 100,
+        brushSize,
+        brushColor: 'transparent',
+        opacity: 0,
       };
       addObjectToLayer(activeLayerId, brushObj);
       return;
     }
 
-    // Handle clone stamp
+    // FIX 7: Clone stamp - use transparent stroke during drawing
     if (activeTool === 'clone-stamp') {
-      if (e.evt.altKey) {
-        // Alt+click sets the clone source
-        setCloneSource({ x: pos.x, y: pos.y });
-        setCloneOffset(null);
-        return;
-      }
-      // Regular click starts painting from clone source offset
+      if (e.evt.altKey) { setCloneSource({ x: pos.x, y: pos.y }); setCloneOffset(null); return; }
       if (!activeLayerId) return;
       if (cloneSource) {
         const offset = { x: pos.x - cloneSource.x, y: pos.y - cloneSource.y };
@@ -1211,31 +1363,24 @@ export default function EditorCanvas() {
         setIsDrawing(true);
         const id = uuidv4();
         drawingIdRef.current = id;
-        // Create brush stroke - the clone stamp paints using the foreground color at lower opacity
-        // In a full implementation we'd sample from the canvas, simplified version just paints
         const brushObj: EditorObject = {
-          id,
-          type: 'brush-stroke',
-          x: 0,
-          y: 0,
+          id, type: 'brush-stroke', x: 0, y: 0,
           points: [pos.x, pos.y],
-          brushSize: brushSize,
-          brushColor: foregroundColor,
-          opacity: 70,
+          brushSize,
+          brushColor: 'transparent',
+          opacity: 0,
         };
         addObjectToLayer(activeLayerId, brushObj);
       }
       return;
     }
 
-    // Handle fill tool (flood fill)
+    // FIX 3: Fill tool - stays active after filling
     if (activeTool === 'fill') {
       if (!activeLayerId) return;
       const stage = stageRef.current;
       if (!stage) return;
-      
       try {
-        // Get the canvas pixel data
         const pixelRatio = 1;
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = canvas.width * pixelRatio;
@@ -1244,41 +1389,28 @@ export default function EditorCanvas() {
         if (ctx) {
           const stageCanvas = stage.toCanvas({ pixelRatio });
           ctx.drawImage(stageCanvas, 0, 0);
-          
           const startX = Math.round(pos.x * pixelRatio);
           const startY = Math.round(pos.y * pixelRatio);
-          
           if (startX >= 0 && startX < tempCanvas.width && startY >= 0 && startY < tempCanvas.height) {
             const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
             const fillRgba = hexToRgba(foregroundColor);
             const filled = floodFill(imageData, startX, startY, fillRgba, fillTolerance);
             ctx.putImageData(filled, 0, 0);
-            
-            // Add the filled result as an image object on the active layer
             const imgDataUrl = tempCanvas.toDataURL('image/png');
-            const id = uuidv4();
             const fillObj: EditorObject = {
-              id,
-              type: 'image',
-              x: 0,
-              y: 0,
-              width: canvas.width,
-              height: canvas.height,
-              imageSrc: imgDataUrl,
-              opacity: 100,
+              id: uuidv4(), type: 'image', x: 0, y: 0,
+              width: canvas.width, height: canvas.height,
+              imageSrc: imgDataUrl, opacity: 100,
             };
             addObjectToLayer(activeLayerId, fillObj);
             pushHistory('Flood Fill');
           }
         }
-      } catch {
-        // Cross-origin image may prevent reading pixels
-      }
-      setActiveTool('select');
+      } catch { /* cross-origin */ }
+      // FIX 3: Don't switch to select tool - stay on fill
       return;
     }
 
-    // Handle gradient tool
     if (activeTool === 'gradient') {
       if (!activeLayerId) return;
       setIsDrawing(true);
@@ -1286,52 +1418,31 @@ export default function EditorCanvas() {
       const id = uuidv4();
       drawingIdRef.current = id;
       const gradientObj: EditorObject = {
-        id,
-        type: 'gradient',
-        x: pos.x,
-        y: pos.y,
-        width: 0,
-        height: 0,
-        gradientStartColor: foregroundColor,
-        gradientEndColor: backgroundColor,
-        gradientDirection: 'horizontal',
-        opacity: 100,
+        id, type: 'gradient', x: pos.x, y: pos.y, width: 0, height: 0,
+        gradientStartColor: foregroundColor, gradientEndColor: backgroundColor,
+        gradientDirection: 'horizontal', opacity: 100,
       };
       addObjectToLayer(activeLayerId, gradientObj);
       return;
     }
 
-    // Handle shape tool
     if (activeTool === 'shape') {
       if (!activeLayerId) return;
       setIsDrawing(true);
       shapeStartRef.current = pos;
       const id = uuidv4();
       drawingIdRef.current = id;
-
       let objType: EditorObject['type'] = 'rect';
-      if (activeShapeType === 'ellipse' || activeShapeType === 'circle') {
-        objType = 'ellipse';
-      }
-
+      if (activeShapeType === 'ellipse' || activeShapeType === 'circle') objType = 'ellipse';
       const shapeObj: EditorObject = {
-        id,
-        type: objType,
-        x: pos.x,
-        y: pos.y,
-        width: 0,
-        height: 0,
-        fill: foregroundColor,
-        stroke: '#000000',
-        strokeWidth: 1,
-        opacity: 100,
+        id, type: objType, x: pos.x, y: pos.y, width: 0, height: 0,
+        fill: foregroundColor, stroke: '#000000', strokeWidth: 1, opacity: 100,
         shapeType: activeShapeType,
       };
       addObjectToLayer(activeLayerId, shapeObj);
       return;
     }
 
-    // Handle line tool
     if (activeTool === 'line') {
       if (!activeLayerId) return;
       setIsDrawing(true);
@@ -1339,42 +1450,33 @@ export default function EditorCanvas() {
       const id = uuidv4();
       drawingIdRef.current = id;
       const lineObj: EditorObject = {
-        id,
-        type: 'line',
-        x: 0,
-        y: 0,
+        id, type: 'line', x: 0, y: 0,
         linePoints: [pos.x, pos.y, pos.x, pos.y],
-        stroke: foregroundColor,
-        strokeWidth: 2,
-        opacity: 100,
+        stroke: foregroundColor, strokeWidth: 2, opacity: 100,
       };
       addObjectToLayer(activeLayerId, lineObj);
       return;
     }
 
-    // Handle text tool
+    // FIX 4: Text tool - stays active after adding
     if (activeTool === 'text') {
       if (!activeLayerId) return;
       const id = uuidv4();
       const textObj: EditorObject = {
-        id,
-        type: 'text',
-        x: pos.x,
-        y: pos.y,
-        text: 'Text',
-        fontSize,
-        fontFamily,
-        fill: foregroundColor,
-        opacity: 100,
+        id, type: 'text', x: pos.x, y: pos.y,
+        text: 'Text', fontSize, fontFamily,
+        fill: foregroundColor, opacity: 100,
       };
       addObjectToLayer(activeLayerId, textObj);
       setSelectedObjectIds([id]);
       pushHistory('Add Text');
-      setActiveTool('select');
+      // FIX 4: Don't switch to select tool
+      // Open inline editing
+      setEditingTextId(id);
+      setEditTextValue('Text');
       return;
     }
 
-    // Handle eyedropper
     if (activeTool === 'eyedropper') {
       const stage = stageRef.current;
       if (!stage) return;
@@ -1387,80 +1489,67 @@ export default function EditorCanvas() {
         if (ctx) {
           const stageCanvas = stage.toCanvas({ pixelRatio });
           ctx.drawImage(stageCanvas, 0, 0);
-          const imageData = ctx.getImageData(
-            Math.round(pos.x * pixelRatio),
-            Math.round(pos.y * pixelRatio),
-            1,
-            1
-          );
+          const imageData = ctx.getImageData(Math.round(pos.x * pixelRatio), Math.round(pos.y * pixelRatio), 1, 1);
           const [r, g, b] = imageData.data;
           const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
           useEditorStore.getState().setForegroundColor(hex);
         }
-      } catch {
-        // Cross-origin image may prevent reading pixels
-      }
-      setActiveTool('select');
+      } catch { /* cross-origin */ }
       return;
     }
-  }, [activeTool, activeLayerId, activeShapeType, isPanning, canvas, selectedObjectIds, foregroundColor, backgroundColor, brushSize, eraserSize, fontSize, fontFamily, getPointerPos, addObjectToLayer, updateObject, setSelectedObjectIds, pushHistory, setIsDrawing, setActiveTool, cloneSource, setCloneSource, penAnchors, finishPenPath, fillTolerance, applyCrop, cropStart, cropEnd]);
+  }, [activeTool, activeLayerId, activeShapeType, isPanning, canvas, selectedObjectIds, foregroundColor, backgroundColor, brushSize, eraserSize, fontSize, fontFamily, getPointerPos, addObjectToLayer, setSelectedObjectIds, pushHistory, setIsDrawing, cloneSource, setCloneSource, penAnchors, finishPenPath, fillTolerance, applyCrop, cropStart, cropEnd, setSelection]);
 
   const handleMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = stageRef.current;
     if (!stage) return;
-
     const pointerPos = stage.getPointerPosition();
     if (pointerPos) {
-      setMousePos({
-        x: Math.round((pointerPos.x - canvas.offsetX) / canvas.zoom),
-        y: Math.round((pointerPos.y - canvas.offsetY) / canvas.zoom),
-      });
+      setMousePos({ x: Math.round((pointerPos.x - canvas.offsetX) / canvas.zoom), y: Math.round((pointerPos.y - canvas.offsetY) / canvas.zoom) });
     }
 
-    // Handle panning
     if (activeTool === 'hand' || isPanning) {
-      const dx = e.evt.movementX;
-      const dy = e.evt.movementY;
-      updateCanvas({
-        offsetX: canvas.offsetX + dx,
-        offsetY: canvas.offsetY + dy,
-      });
+      updateCanvas({ offsetX: canvas.offsetX + e.evt.movementX, offsetY: canvas.offsetY + e.evt.movementY });
       return;
     }
 
-    // Handle marquee tool
-    if (activeTool === 'marquee' && marqueeStart) {
-      const pos = getPointerPos();
-      setMarqueeEnd(pos);
+    const pos = getPointerPos();
+
+    // Selection tools
+    if ((activeTool === 'rect-select' || activeTool === 'ellipse-select') && selectionStart) {
+      setSelectionEnd(pos);
       return;
     }
 
-    // Handle measure tool
-    if (activeTool === 'measure' && measureStart) {
-      const pos = getPointerPos();
-      setMeasureEnd(pos);
-      return;
-    }
+    if (activeTool === 'measure' && measureStart) { setMeasureEnd(pos); return; }
+    if ((activeTool === 'crop' || activeTool === 'circle-crop') && cropStart) { setCropEnd(pos); return; }
+    if (activeTool === 'slice' && sliceStart) { setSliceEnd(pos); return; }
 
-    // Handle crop tool
-    if (activeTool === 'crop' && cropStart) {
-      const pos = getPointerPos();
-      setCropEnd(pos);
-      return;
-    }
-
-    // Handle slice tool
-    if (activeTool === 'slice' && sliceStart) {
-      const pos = getPointerPos();
-      setSliceEnd(pos);
+    // FIX 4: Pen tool dragging - only create handles if dragged more than 3px
+    if (activeTool === 'pen' && penDragging && penAnchors.length > 0) {
+      const lastIdx = penAnchors.length - 1;
+      const anchor = penAnchors[lastIdx];
+      const start = shapeStartRef.current;
+      if (start) {
+        const dx = pos.x - start.x;
+        const dy = pos.y - start.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > 3) {
+          setPenAnchors(prev => {
+            const updated = [...prev];
+            const a = { ...updated[lastIdx] };
+            a.handleOutX = pos.x;
+            a.handleOutY = pos.y;
+            updated[lastIdx] = a;
+            return updated;
+          });
+        }
+      }
       return;
     }
 
     if (!activeLayerId) return;
 
-    const pos = getPointerPos();
-
-    // Drawing with brush/eraser/dodge/burn/sponge/blur/sharpen/clone-stamp
+    // Drawing with brush/eraser/effects/clone
     if (useEditorStore.getState().isDrawing && drawingIdRef.current) {
       const id = drawingIdRef.current;
       const layer = useEditorStore.getState().layers.find((l) => l.id === activeLayerId);
@@ -1476,38 +1565,102 @@ export default function EditorCanvas() {
         if (!start) return;
         const width = pos.x - start.x;
         const height = pos.y - start.y;
-        updateObject(activeLayerId, id, {
-          x: width < 0 ? pos.x : start.x,
-          y: height < 0 ? pos.y : start.y,
-          width: Math.abs(width),
-          height: Math.abs(height),
-        });
+        updateObject(activeLayerId, id, { x: width < 0 ? pos.x : start.x, y: height < 0 ? pos.y : start.y, width: Math.abs(width), height: Math.abs(height) });
       } else if (obj.type === 'gradient') {
         const start = shapeStartRef.current;
         if (!start) return;
         const width = pos.x - start.x;
         const height = pos.y - start.y;
-        updateObject(activeLayerId, id, {
-          x: width < 0 ? pos.x : start.x,
-          y: height < 0 ? pos.y : start.y,
-          width: Math.abs(width),
-          height: Math.abs(height),
-          gradientDirection: Math.abs(width) > Math.abs(height) ? 'horizontal' : 'vertical',
-        });
+        updateObject(activeLayerId, id, { x: width < 0 ? pos.x : start.x, y: height < 0 ? pos.y : start.y, width: Math.abs(width), height: Math.abs(height), gradientDirection: Math.abs(width) > Math.abs(height) ? 'horizontal' : 'vertical' });
       } else if (obj.type === 'line') {
         const start = shapeStartRef.current;
         if (!start) return;
-        updateObject(activeLayerId, id, {
-          linePoints: [start.x, start.y, pos.x, pos.y],
-        });
+        updateObject(activeLayerId, id, { linePoints: [start.x, start.y, pos.x, pos.y] });
       }
     }
-  }, [activeTool, activeLayerId, isPanning, canvas, getPointerPos, updateCanvas, updateObject, setMousePos, marqueeStart, measureStart, cropStart, sliceStart]);
+  }, [activeTool, activeLayerId, isPanning, canvas, getPointerPos, updateCanvas, updateObject, setMousePos, selectionStart, measureStart, cropStart, sliceStart, penDragging, penAnchors]);
 
   const handleMouseUp = useCallback(() => {
+    // FIX 4: Pen tool - finalize handle on mouseup
+    if (penDragging && penAnchors.length > 0) {
+      setPenDragging(false);
+      const lastIdx = penAnchors.length - 1;
+      if (penAnchors[lastIdx].handleOutX !== undefined) {
+        // User dragged - set handleIn as the mirror of handleOut
+        setPenAnchors(prev => {
+          const updated = [...prev];
+          const anchor = { ...updated[lastIdx] };
+          anchor.handleInX = 2 * anchor.x - anchor.handleOutX!;
+          anchor.handleInY = 2 * anchor.y - anchor.handleOutY!;
+          updated[lastIdx] = anchor;
+          return updated;
+        });
+      }
+      // If no handleOut was set, this was a simple click - leave as straight point (no handles)
+      shapeStartRef.current = null;
+    }
+
     if (useEditorStore.getState().isDrawing) {
       setIsDrawing(false);
-      if (drawingIdRef.current) {
+      if (drawingIdRef.current && activeLayerId) {
+        const state = useEditorStore.getState();
+        const layer = state.layers.find((l) => l.id === activeLayerId);
+        const obj = layer?.objects.find((o) => o.id === drawingIdRef.current);
+
+        // FIX 8: Apply effect brushes on mouseup
+        if (obj && obj.type === 'brush-stroke' && ['blur-brush', 'sharpen-brush', 'dodge', 'burn', 'sponge'].includes(activeTool)) {
+          applyEffectBrush(obj, activeTool);
+        }
+
+        // FIX 7: Clone stamp - sample from source using full canvas approach
+        if (obj && obj.type === 'brush-stroke' && activeTool === 'clone-stamp' && cloneSource) {
+          const stage = stageRef.current;
+          if (stage) {
+            try {
+              const pts = obj.points || [];
+              if (pts.length >= 2) {
+                const pad = brushSize;
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                for (let i = 0; i < pts.length; i += 2) {
+                  minX = Math.min(minX, pts[i]); minY = Math.min(minY, pts[i+1]);
+                  maxX = Math.max(maxX, pts[i]); maxY = Math.max(maxY, pts[i+1]);
+                }
+                minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+                minX = Math.max(0, Math.floor(minX));
+                minY = Math.max(0, Math.floor(minY));
+                maxX = Math.min(canvas.width, Math.ceil(maxX));
+                maxY = Math.min(canvas.height, Math.ceil(maxY));
+                const bw = maxX - minX; const bh = maxY - minY;
+                if (bw > 0 && bh > 0) {
+                  const offset = cloneOffset || { x: 0, y: 0 };
+                  // Get the full stage canvas and extract the clone source region
+                  const fullStageCanvas = stage.toCanvas({ pixelRatio: 1 });
+                  const tempCanvas = document.createElement('canvas');
+                  tempCanvas.width = bw; tempCanvas.height = bh;
+                  const ctx = tempCanvas.getContext('2d')!;
+                  // Source region is offset from the destination by the clone offset
+                  const srcX = (minX + offset.x) * canvas.zoom + canvas.offsetX;
+                  const srcY = (minY + offset.y) * canvas.zoom + canvas.offsetY;
+                  const srcW = bw * canvas.zoom;
+                  const srcH = bh * canvas.zoom;
+                  ctx.drawImage(fullStageCanvas, srcX, srcY, srcW, srcH, 0, 0, bw, bh);
+                  removeObject(activeLayerId, obj.id);
+                  const imgObj: EditorObject = {
+                    id: uuidv4(), type: 'image', x: minX, y: minY,
+                    width: bw, height: bh,
+                    imageSrc: tempCanvas.toDataURL('image/png'),
+                    opacity: 100,
+                  };
+                  addObjectToLayer(activeLayerId, imgObj);
+                }
+              }
+            } catch {
+              // If clone fails, remove the invisible stroke
+              if (obj) removeObject(activeLayerId, obj.id);
+            }
+          }
+        }
+
         const desc = activeTool === 'brush' ? 'Brush Stroke' :
                      activeTool === 'eraser' ? 'Eraser Stroke' :
                      activeTool === 'shape' ? 'Draw Shape' :
@@ -1516,73 +1669,62 @@ export default function EditorCanvas() {
                      activeTool === 'dodge' ? 'Dodge Stroke' :
                      activeTool === 'burn' ? 'Burn Stroke' :
                      activeTool === 'sponge' ? 'Sponge Stroke' :
-                     activeTool === 'blur-brush' ? 'Blur Brush Stroke' :
-                     activeTool === 'sharpen-brush' ? 'Sharpen Brush Stroke' :
-                     activeTool === 'clone-stamp' ? 'Clone Stamp Stroke' :
+                     activeTool === 'blur-brush' ? 'Blur Brush' :
+                     activeTool === 'sharpen-brush' ? 'Sharpen Brush' :
+                     activeTool === 'clone-stamp' ? 'Clone Stamp' :
                      'Draw';
         pushHistory(desc);
       }
       drawingIdRef.current = null;
       shapeStartRef.current = null;
     }
-    // Clear marquee
-    if (activeTool === 'marquee') {
-      setMarqueeStart(null);
-      setMarqueeEnd(null);
+
+    // Finalize selection
+    if ((activeTool === 'rect-select' || activeTool === 'ellipse-select') && selectionStart && selectionEnd) {
+      const x = Math.min(selectionStart.x, selectionEnd.x);
+      const y = Math.min(selectionStart.y, selectionEnd.y);
+      const w = Math.abs(selectionEnd.x - selectionStart.x);
+      const h = Math.abs(selectionEnd.y - selectionStart.y);
+      if (w > 1 && h > 1) {
+        setSelection({ type: activeTool === 'ellipse-select' ? 'ellipse' : 'rect', x, y, width: w, height: h });
+      }
+      setSelectionStart(null);
+      setSelectionEnd(null);
     }
-    // Keep measure visible until next click
-    
-    // Handle slice tool completion
+
+    // Slice tool completion
     if (activeTool === 'slice' && sliceStart && sliceEnd) {
-      // Create guide lines from the slice
       const x1 = Math.min(sliceStart.x, sliceEnd.x);
       const y1 = Math.min(sliceStart.y, sliceEnd.y);
       const x2 = Math.max(sliceStart.x, sliceEnd.x);
       const y2 = Math.max(sliceStart.y, sliceEnd.y);
-      const guides: SnapGuide[] = [
+      setSnapGuides([
         { type: 'vertical', position: x1 },
         { type: 'vertical', position: x2 },
         { type: 'horizontal', position: y1 },
         { type: 'horizontal', position: y2 },
-      ];
-      setSnapGuides(guides);
+      ]);
       setSliceStart(null);
       setSliceEnd(null);
     }
-  }, [activeTool, setIsDrawing, pushHistory, sliceStart, sliceEnd, setSnapGuides]);
+  }, [activeTool, setIsDrawing, pushHistory, sliceStart, sliceEnd, setSnapGuides, selectionStart, selectionEnd, setSelection, penDragging, penAnchors, activeLayerId, applyEffectBrush, cloneSource, cloneOffset, brushSize, removeObject, addObjectToLayer]);
 
-  // Handle wheel for zoom/pan
   const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
     const stage = stageRef.current;
     if (!stage) return;
-
     const pointer = stage.getPointerPosition();
     if (!pointer) return;
 
     if (e.evt.ctrlKey || e.evt.metaKey) {
-      // Zoom
       const scaleBy = 1.05;
       const oldZoom = canvas.zoom;
       const newZoom = e.evt.deltaY < 0 ? oldZoom * scaleBy : oldZoom / scaleBy;
       const clampedZoom = Math.max(0.05, Math.min(32, newZoom));
-
-      const mousePointTo = {
-        x: (pointer.x - canvas.offsetX) / oldZoom,
-        y: (pointer.y - canvas.offsetY) / oldZoom,
-      };
-
-      updateCanvas({
-        zoom: clampedZoom,
-        offsetX: pointer.x - mousePointTo.x * clampedZoom,
-        offsetY: pointer.y - mousePointTo.y * clampedZoom,
-      });
+      const mousePointTo = { x: (pointer.x - canvas.offsetX) / oldZoom, y: (pointer.y - canvas.offsetY) / oldZoom };
+      updateCanvas({ zoom: clampedZoom, offsetX: pointer.x - mousePointTo.x * clampedZoom, offsetY: pointer.y - mousePointTo.y * clampedZoom });
     } else {
-      // Pan
-      updateCanvas({
-        offsetX: canvas.offsetX - e.evt.deltaX,
-        offsetY: canvas.offsetY - e.evt.deltaY,
-      });
+      updateCanvas({ offsetX: canvas.offsetX - e.evt.deltaX, offsetY: canvas.offsetY - e.evt.deltaY });
     }
   }, [canvas, updateCanvas]);
 
@@ -1591,23 +1733,11 @@ export default function EditorCanvas() {
     switch (activeTool) {
       case 'hand': return 'grab';
       case 'zoom': return 'zoom-in';
-      case 'brush':
-      case 'eraser':
-      case 'dodge':
-      case 'burn':
-      case 'sponge':
-      case 'blur-brush':
-      case 'sharpen-brush':
-      case 'clone-stamp': return 'crosshair';
+      case 'brush': case 'eraser': case 'dodge': case 'burn': case 'sponge':
+      case 'blur-brush': case 'sharpen-brush': case 'clone-stamp': return 'crosshair';
       case 'text': return 'text';
-      case 'eyedropper': return 'crosshair';
-      case 'fill': return 'crosshair';
-      case 'crop': return 'crosshair';
-      case 'pen': return 'crosshair';
-      case 'gradient': return 'crosshair';
-      case 'measure': return 'crosshair';
-      case 'marquee': return 'crosshair';
-      case 'slice': return 'crosshair';
+      case 'eyedropper': case 'fill': case 'crop': case 'pen': case 'gradient':
+      case 'measure': case 'slice': case 'rect-select': case 'ellipse-select': case 'magic-wand': return 'crosshair';
       default: return 'default';
     }
   };
@@ -1616,36 +1746,23 @@ export default function EditorCanvas() {
   const gridSize = 50;
   const gridLines: React.ReactNode[] = [];
   if (showGrid) {
-    for (let x = 0; x <= canvas.width; x += gridSize) {
-      gridLines.push(
-        <Line
-          key={`gv-${x}`}
-          points={[x, 0, x, canvas.height]}
-          stroke="#888888"
-          strokeWidth={0.5}
-          listening={false}
-        />
-      );
-    }
-    for (let y = 0; y <= canvas.height; y += gridSize) {
-      gridLines.push(
-        <Line
-          key={`gh-${y}`}
-          points={[0, y, canvas.width, y]}
-          stroke="#888888"
-          strokeWidth={0.5}
-          listening={false}
-        />
-      );
-    }
+    for (let x = 0; x <= canvas.width; x += gridSize) gridLines.push(<Line key={`gv-${x}`} points={[x, 0, x, canvas.height]} stroke="#888888" strokeWidth={0.5} listening={false} />);
+    for (let y = 0; y <= canvas.height; y += gridSize) gridLines.push(<Line key={`gh-${y}`} points={[0, y, canvas.width, y]} stroke="#888888" strokeWidth={0.5} listening={false} />);
   }
 
+  // Current selection for display
+  const currentSelection = useEditorStore((s) => s.selection);
+  // Build temp selection overlay from drag
+  const displaySelection = selectionStart && selectionEnd ? {
+    type: activeTool === 'ellipse-select' ? 'ellipse' : 'rect' as const,
+    x: Math.min(selectionStart.x, selectionEnd.x),
+    y: Math.min(selectionStart.y, selectionEnd.y),
+    width: Math.abs(selectionEnd.x - selectionStart.x),
+    height: Math.abs(selectionEnd.y - selectionStart.y),
+  } : currentSelection;
+
   return (
-    <div
-      ref={containerRef}
-      className="canvas-container flex-1 bg-zinc-950 overflow-hidden relative"
-      style={{ cursor: getCursorStyle() }}
-    >
+    <div ref={containerRef} className="canvas-container flex-1 bg-zinc-950 overflow-hidden relative" style={{ cursor: getCursorStyle() }}>
       <Stage
         ref={stageRef}
         width={containerSize.width}
@@ -1660,36 +1777,16 @@ export default function EditorCanvas() {
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
       >
-        {/* Checkerboard background pattern */}
+        {/* Checkerboard background */}
         <Layer listening={false}>
-          <Rect
-            x={4}
-            y={4}
-            width={canvas.width}
-            height={canvas.height}
-            fill="rgba(0,0,0,0.3)"
-            shadowBlur={20}
-            shadowColor="rgba(0,0,0,0.5)"
-            shadowOffsetX={4}
-            shadowOffsetY={4}
-          />
-          <Rect
-            x={0}
-            y={0}
-            width={canvas.width}
-            height={canvas.height}
-            fill="#ffffff"
-          />
-          {/* Checkerboard pattern */}
+          <Rect x={4} y={4} width={canvas.width} height={canvas.height} fill="rgba(0,0,0,0.3)" shadowBlur={20} shadowColor="rgba(0,0,0,0.5)" shadowOffsetX={4} shadowOffsetY={4} />
+          <Rect x={0} y={0} width={canvas.width} height={canvas.height} fill="#ffffff" />
           <Shape
             sceneFunc={(context, shape) => {
               const size = 10;
               for (let y = 0; y < canvas.height; y += size) {
                 for (let x = 0; x < canvas.width; x += size) {
-                  const isLight = ((x / size + y / size) % 2) === 0;
-                  if (!isLight) {
-                    context.rect(x, y, size, size);
-                  }
+                  if (((x / size + y / size) % 2) !== 0) context.rect(x, y, size, size);
                 }
               }
               context.fillStrokeShape(shape);
@@ -1700,12 +1797,7 @@ export default function EditorCanvas() {
 
         {/* Layer objects */}
         {layers.map((layer) => (
-          <Layer
-            key={layer.id}
-            visible={layer.visible}
-            opacity={layer.opacity / 100}
-            listening={!layer.locked}
-          >
+          <Layer key={layer.id} visible={layer.visible} opacity={layer.opacity / 100} listening={!layer.locked}>
             {layer.objects.map((obj) => (
               <EditorObjectRenderer
                 key={obj.id}
@@ -1719,56 +1811,30 @@ export default function EditorCanvas() {
         ))}
 
         {/* Grid overlay */}
-        {showGrid && (
-          <Layer listening={false}>
-            {gridLines}
-          </Layer>
-        )}
+        {showGrid && <Layer listening={false}>{gridLines}</Layer>}
 
         {/* Snap guides */}
-        {showSnapGuides && (
-          <Layer listening={false}>
-            <SnapGuidesOverlay guides={useEditorStore.getState().snapGuides} />
-          </Layer>
-        )}
+        {showSnapGuides && <Layer listening={false}><SnapGuidesOverlay guides={useEditorStore.getState().snapGuides} /></Layer>}
 
         {/* UI overlays */}
         <Layer listening={false}>
-          {/* Marquee */}
-          {activeTool === 'marquee' && <MarqueeOverlay startPos={marqueeStart} endPos={marqueeEnd} />}
+          {/* Selection overlay */}
+          {displaySelection && <SelectionOverlay selection={displaySelection} />}
           {/* Measure */}
           {activeTool === 'measure' && <MeasureOverlay startPos={measureStart} endPos={measureEnd} />}
           {/* Crop */}
-          {activeTool === 'crop' && <CropOverlay cropStart={cropStart} cropEnd={cropEnd} canvasWidth={canvas.width} canvasHeight={canvas.height} />}
+          {(activeTool === 'crop' || activeTool === 'circle-crop') && <CropOverlay cropStart={cropStart} cropEnd={cropEnd} canvasWidth={canvas.width} canvasHeight={canvas.height} cropMode={cropMode} />}
           {/* Slice */}
           {activeTool === 'slice' && sliceStart && sliceEnd && (
-            <>
-              <Line
-                points={[sliceStart.x, sliceStart.y, sliceEnd.x, sliceStart.y, sliceEnd.x, sliceEnd.y, sliceStart.x, sliceEnd.y, sliceStart.x, sliceStart.y]}
-                stroke="#ff6600"
-                strokeWidth={1}
-                dash={[6, 3]}
-                listening={false}
-              />
-            </>
+            <Line points={[sliceStart.x, sliceStart.y, sliceEnd.x, sliceStart.y, sliceEnd.x, sliceEnd.y, sliceStart.x, sliceEnd.y, sliceStart.x, sliceStart.y]} stroke="#ff6600" strokeWidth={1} dash={[6, 3]} listening={false} />
           )}
           {/* Pen preview */}
-          {activeTool === 'pen' && <PenPreview anchors={penAnchors} isClosed={false} />}
+          {activeTool === 'pen' && <PenPreview anchors={penAnchors} />}
           {/* Clone stamp source indicator */}
           {activeTool === 'clone-stamp' && cloneSource && (
             <>
-              <Line
-                points={[cloneSource.x - 10, cloneSource.y, cloneSource.x + 10, cloneSource.y]}
-                stroke="#ff4081"
-                strokeWidth={1}
-                listening={false}
-              />
-              <Line
-                points={[cloneSource.x, cloneSource.y - 10, cloneSource.x, cloneSource.y + 10]}
-                stroke="#ff4081"
-                strokeWidth={1}
-                listening={false}
-              />
+              <Line points={[cloneSource.x - 10, cloneSource.y, cloneSource.x + 10, cloneSource.y]} stroke="#ff4081" strokeWidth={1} listening={false} />
+              <Line points={[cloneSource.x, cloneSource.y - 10, cloneSource.x, cloneSource.y + 10]} stroke="#ff4081" strokeWidth={1} listening={false} />
             </>
           )}
         </Layer>
@@ -1779,33 +1845,26 @@ export default function EditorCanvas() {
         </Layer>
       </Stage>
 
-      {/* Crop apply button */}
-      {activeTool === 'crop' && cropStart && cropEnd && (
+      {/* FIX 5: Crop apply/cancel buttons as HTML overlay */}
+      {(activeTool === 'crop' || activeTool === 'circle-crop') && cropStart && cropEnd && (
         <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
           <button
-            className="px-4 py-2 bg-emerald-600 text-white text-sm rounded hover:bg-emerald-700 transition-colors"
+            className="px-4 py-1.5 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-700 transition-colors shadow-lg"
             onClick={() => {
               const x = Math.min(cropStart.x, cropEnd.x);
               const y = Math.min(cropStart.y, cropEnd.y);
               const w = Math.abs(cropEnd.x - cropStart.x);
               const h = Math.abs(cropEnd.y - cropStart.y);
-              if (w > 1 && h > 1) {
-                applyCrop(x, y, w, h);
-                setCropStart(null);
-                setCropEnd(null);
-              }
+              if (w > 1 && h > 1) { applyCrop(x, y, w, h); setCropStart(null); setCropEnd(null); }
             }}
           >
-            Apply Crop
+            ✓ Apply (Enter)
           </button>
           <button
-            className="px-4 py-2 bg-zinc-700 text-zinc-200 text-sm rounded hover:bg-zinc-600 transition-colors"
-            onClick={() => {
-              setCropStart(null);
-              setCropEnd(null);
-            }}
+            className="px-4 py-1.5 bg-zinc-700 text-zinc-200 text-xs rounded hover:bg-zinc-600 transition-colors shadow-lg"
+            onClick={() => { setCropStart(null); setCropEnd(null); }}
           >
-            Cancel
+            ✕ Cancel (Esc)
           </button>
         </div>
       )}
@@ -1819,6 +1878,41 @@ export default function EditorCanvas() {
       {activeTool === 'clone-stamp' && cloneSource && (
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-emerald-300 text-xs px-3 py-2 rounded border border-zinc-700 z-10">
           Source set. Click and drag to clone.
+        </div>
+      )}
+
+      {/* FIX 4: Text edit overlay */}
+      {editingTextId && activeTool === 'text' && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-zinc-800 border border-zinc-700 rounded-md p-3 z-20 min-w-[200px]">
+          <label className="text-xs text-zinc-400 block mb-1">Edit Text</label>
+          <input
+            className="w-full bg-zinc-700 text-zinc-200 text-sm px-2 py-1 rounded border border-zinc-600 outline-none focus:border-emerald-500"
+            value={editTextValue}
+            onChange={(e) => {
+              setEditTextValue(e.target.value);
+              if (activeLayerId) {
+                updateObject(activeLayerId, editingTextId, { text: e.target.value });
+              }
+            }}
+            onBlur={() => {
+              if (activeLayerId && editTextValue.trim()) {
+                updateObject(activeLayerId, editingTextId, { text: editTextValue });
+                pushHistory('Edit Text');
+              }
+              setEditingTextId(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (activeLayerId && editTextValue.trim()) {
+                  updateObject(activeLayerId, editingTextId, { text: editTextValue });
+                  pushHistory('Edit Text');
+                }
+                setEditingTextId(null);
+              }
+              if (e.key === 'Escape') setEditingTextId(null);
+            }}
+            autoFocus
+          />
         </div>
       )}
     </div>

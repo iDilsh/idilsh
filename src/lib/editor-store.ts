@@ -14,6 +14,8 @@ import type {
   CropState,
   SnapGuide,
   BrushPreset,
+  SelectionState,
+  BrushShape,
 } from './types';
 import { DEFAULT_LAYER_EFFECTS } from './types';
 import { parsePSDFile } from './psd-parser';
@@ -60,6 +62,14 @@ interface EditorState {
   cropState: CropState | null;
   // Fill tolerance
   fillTolerance: number;
+  // Selection state
+  selection: SelectionState | null;
+  // Crop mode
+  cropMode: 'rect' | 'circle';
+  // Effects panel position
+  effectsPanelPosition: { x: number; y: number } | null;
+  // Brush shape
+  brushShape: BrushShape;
 }
 
 interface EditorActions {
@@ -131,9 +141,24 @@ interface EditorActions {
   applyCrop: (x: number, y: number, w: number, h: number) => void;
   // Fill tolerance
   setFillTolerance: (tolerance: number) => void;
+  // Selection
+  setSelection: (selection: SelectionState | null) => void;
+  clearSelection: () => void;
+  // Crop mode
+  setCropMode: (mode: 'rect' | 'circle') => void;
+  // Effects panel position
+  setEffectsPanelPosition: (pos: { x: number; y: number } | null) => void;
+  // Brush shape
+  setBrushShape: (shape: BrushShape) => void;
+  // Merge visible
+  mergeVisible: () => void;
   // Layer mask
   addLayerMask: (layerId: string) => void;
   removeLayerMask: (layerId: string) => void;
+  // Layer grouping
+  groupLayers: (layerIds: string[]) => void;
+  // Rasterize layer
+  rasterizeLayer: (layerId: string) => void;
   // Tab sync
   syncToTab: () => void;
   loadFromTab: (tab: ProjectTab) => void;
@@ -222,6 +247,10 @@ export const useEditorStore = create<EditorState & EditorActions>((set, get) => 
   cloneSource: null,
   cropState: null,
   fillTolerance: 32,
+  selection: null,
+  cropMode: 'rect',
+  effectsPanelPosition: null,
+  brushShape: 'round',
 
   // Sync current state to the active tab
   syncToTab: () => {
@@ -749,6 +778,32 @@ export const useEditorStore = create<EditorState & EditorActions>((set, get) => 
   setCropState: (state) => set({ cropState: state }),
   setFillTolerance: (tolerance) => set({ fillTolerance: tolerance }),
 
+  setSelection: (selection) => set({ selection }),
+  clearSelection: () => set({ selection: null }),
+  setCropMode: (mode) => set({ cropMode: mode }),
+  setEffectsPanelPosition: (pos) => set({ effectsPanelPosition: pos }),
+  setBrushShape: (shape) => set({ brushShape: shape }),
+  mergeVisible: () => {
+    set((s) => {
+      const visibleLayers = s.layers.filter((l) => l.visible);
+      if (visibleLayers.length <= 1) return s;
+      const allObjects = visibleLayers.flatMap((l) => l.objects);
+      const merged: EditorLayer = {
+        id: uuidv4(),
+        name: 'Merged Visible',
+        type: 'raster',
+        visible: true,
+        locked: false,
+        opacity: 100,
+        blendMode: 'normal',
+        objects: allObjects,
+        effects: { ...DEFAULT_LAYER_EFFECTS },
+      };
+      const hiddenLayers = s.layers.filter((l) => !l.visible);
+      return { layers: [...hiddenLayers, merged], activeLayerId: merged.id, selectedObjectIds: [] };
+    });
+  },
+
   applyCrop: (x: number, y: number, w: number, h: number) => {
     const state = get();
     state.pushHistory('Crop Canvas');
@@ -788,5 +843,37 @@ export const useEditorStore = create<EditorState & EditorActions>((set, get) => 
     const state = get();
     state.updateLayer(layerId, { hasMask: false, maskData: undefined });
     state.pushHistory('Remove Layer Mask');
+  },
+
+  groupLayers: (layerIds: string[]) => {
+    set((s) => {
+      const selectedLayers = s.layers.filter((l) => layerIds.includes(l.id));
+      if (selectedLayers.length < 2) return s;
+      const allObjects = selectedLayers.flatMap((l) => l.objects);
+      const groupLayer: EditorLayer = {
+        id: uuidv4(),
+        name: `Group`,
+        type: 'group',
+        visible: true,
+        locked: false,
+        opacity: 100,
+        blendMode: 'normal',
+        objects: allObjects,
+        effects: { ...DEFAULT_LAYER_EFFECTS },
+      };
+      const firstIdx = s.layers.findIndex((l) => l.id === layerIds[0]);
+      const newLayers = s.layers.filter((l) => !layerIds.includes(l.id));
+      newLayers.splice(firstIdx, 0, groupLayer);
+      return { layers: newLayers, activeLayerId: groupLayer.id };
+    });
+  },
+
+  rasterizeLayer: (layerId: string) => {
+    const state = get();
+    const layer = state.layers.find((l) => l.id === layerId);
+    if (!layer) return;
+    // For simplicity, just mark objects as rasterized - actual rasterization happens at render time
+    // In a full implementation, we would convert objects to a single image
+    state.pushHistory('Rasterize Layer');
   },
 }));

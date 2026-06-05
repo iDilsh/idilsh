@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Settings2 } from 'lucide-react';
 import { useCallback } from 'react';
+import ScrubbySlider from './ScrubbySlider';
 
 export default function PropertiesPanel() {
   const layers = useEditorStore((s) => s.layers);
@@ -278,9 +279,15 @@ export default function PropertiesPanel() {
               onValueChange={(v) => handleUpdateObject(obj.id, { opacity: v[0] })}
               className="flex-1"
             />
-            <span className="text-[10px] text-zinc-400 w-8 text-right">
-              {obj.opacity ?? 100}%
-            </span>
+            <ScrubbySlider
+              value={obj.opacity ?? 100}
+              onChange={(v) => handleUpdateObject(obj.id, { opacity: v })}
+              min={0}
+              max={100}
+              step={1}
+              suffix="%"
+              className="text-[10px] text-zinc-400 w-8 text-right"
+            />
           </div>
         </div>
 
@@ -311,13 +318,25 @@ export default function PropertiesPanel() {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-[10px] text-zinc-500">Size</label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={obj.fontSize || 24}
-                    onChange={(e) => handleUpdateObject(obj.id, { fontSize: Number(e.target.value) })}
-                    className="h-6 text-xs bg-zinc-800 border-zinc-700 text-zinc-300"
-                  />
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={500}
+                      value={obj.fontSize || 24}
+                      onChange={(e) => handleUpdateObject(obj.id, { fontSize: Number(e.target.value) })}
+                      className="h-6 text-xs bg-zinc-800 border-zinc-700 text-zinc-300 w-16"
+                    />
+                    <ScrubbySlider
+                      value={obj.fontSize || 24}
+                      onChange={(v) => handleUpdateObject(obj.id, { fontSize: v })}
+                      min={1}
+                      max={500}
+                      step={1}
+                      suffix="px"
+                      className="text-[10px] text-zinc-400"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="text-[10px] text-zinc-500">Font</label>
@@ -339,6 +358,23 @@ export default function PropertiesPanel() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div>
+                <label className="text-[10px] text-zinc-500">Font Style</label>
+                <Select
+                  value={obj.fontStyle || 'normal'}
+                  onValueChange={(v) => handleUpdateObject(obj.id, { fontStyle: v })}
+                >
+                  <SelectTrigger className="h-6 text-xs bg-zinc-800 border-zinc-700 text-zinc-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectItem value="normal" className="text-xs text-zinc-300">Normal</SelectItem>
+                    <SelectItem value="bold" className="text-xs text-zinc-300">Bold</SelectItem>
+                    <SelectItem value="italic" className="text-xs text-zinc-300">Italic</SelectItem>
+                    <SelectItem value="bold italic" className="text-xs text-zinc-300">Bold Italic</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="text-[10px] text-zinc-500">Color</label>

@@ -14,6 +14,11 @@ export async function parsePSDFile(file: File): Promise<PSDImportResult> {
   const psd = readPsd(buffer, {
     skipCompositeImageData: false,
     skipThumbnail: false,
+    skipLayerImageData: false,
+    createCanvas: () => {
+      const c = document.createElement('canvas');
+      return c as unknown as import('canvas').Canvas;
+    },
   });
 
   const width = psd.width || 800;
@@ -24,14 +29,14 @@ export async function parsePSDFile(file: File): Promise<PSDImportResult> {
     const layerId = uuidv4();
     const objects: EditorObject[] = [];
 
-    // If the layer has a canvas (rasterized content), add it as image object
+    // FIX 13: If the layer has a canvas (rasterized content), add it as image object
     const canvas = psdLayer.canvas as HTMLCanvasElement | undefined;
-    if (canvas) {
+    if (canvas && canvas.width > 0 && canvas.height > 0) {
       const dataUrl = canvas.toDataURL('image/png');
       const left = (psdLayer.left as number) || 0;
       const top = (psdLayer.top as number) || 0;
-      const right = (psdLayer.right as number) || 0;
-      const bottom = (psdLayer.bottom as number) || 0;
+      const right = (psdLayer.right as number) || canvas.width;
+      const bottom = (psdLayer.bottom as number) || canvas.height;
       objects.push({
         id: uuidv4(),
         type: 'image',
@@ -42,6 +47,31 @@ export async function parsePSDFile(file: File): Promise<PSDImportResult> {
         imageSrc: dataUrl,
         opacity: 100,
       });
+    } else if (psdLayer.canvas && (psdLayer.canvas as HTMLCanvasElement).width === 0) {
+      // FIX 13: Layer has a canvas but it's empty - try using imageData if available
+      const imageData = psdLayer.imageData as ImageData | undefined;
+      if (imageData && imageData.width > 0 && imageData.height > 0) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = imageData.width;
+        tempCanvas.height = imageData.height;
+        const ctx = tempCanvas.getContext('2d');
+        if (ctx) {
+          ctx.putImageData(imageData, 0, 0);
+          const dataUrl = tempCanvas.toDataURL('image/png');
+          const left = (psdLayer.left as number) || 0;
+          const top = (psdLayer.top as number) || 0;
+          objects.push({
+            id: uuidv4(),
+            type: 'image',
+            x: left,
+            y: top,
+            width: imageData.width,
+            height: imageData.height,
+            imageSrc: dataUrl,
+            opacity: 100,
+          });
+        }
+      }
     }
 
     // Parse PSD layer effects
@@ -162,6 +192,40 @@ export async function parsePSDFile(file: File): Promise<PSDImportResult> {
   if (children) {
     for (let i = 0; i < children.length; i++) {
       processPsdLayer(children[i], i);
+    }
+  }
+
+  // FIX 13: If all layers are empty but there's a composite image, use it
+  if (layers.every(l => l.objects.length === 0) && (psd as Record<string, unknown>).canvas) {
+    const compositeCanvas = (psd as Record<string, unknown>).canvas as HTMLCanvasElement;
+    if (compositeCanvas && compositeCanvas.width > 0 && compositeCanvas.height > 0) {
+      const dataUrl = compositeCanvas.toDataURL('image/png');
+      const bgLayer: EditorLayer = {
+        id: uuidv4(),
+        name: 'Background',
+        type: 'raster',
+        visible: true,
+        locked: false,
+        opacity: 100,
+        blendMode: 'normal',
+        objects: [{
+          id: uuidv4(),
+          type: 'image',
+          x: 0,
+          y: 0,
+          width: compositeCanvas.width,
+          height: compositeCanvas.height,
+          imageSrc: dataUrl,
+          opacity: 100,
+        }],
+      };
+      // Replace empty layers with the composite image
+      if (layers.length > 0) {
+        // Keep named layers but add composite as background
+        layers.push(bgLayer);
+      } else {
+        layers.push(bgLayer);
+      }
     }
   }
 
