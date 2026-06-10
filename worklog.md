@@ -1,27 +1,26 @@
 ---
 Task ID: 1
-Agent: Main
-Task: Fix Vercel deployment issues for Pansil Maluwa website
+Agent: main
+Task: Fix Vercel deployment issues - database and client-side error handling
 
 Work Log:
-- Analyzed Vercel deployment error screenshot: "No Output Directory named 'dist' found"
-- Identified root cause: `output: "standalone"` in next.config.ts changes build output structure
-- Removed `output: "standalone"` from next.config.ts
-- Fixed build script: changed from `next build && cp -r...` to `prisma generate && next build`
-- Added `postinstall: "prisma generate"` script for Vercel build process
-- Updated `start` script from standalone server to `next start`
-- Installed `@libsql/client` and `@prisma/adapter-libsql` for Vercel-compatible database
-- Updated db.ts with LibSQL adapter instructions for Vercel (keeps SQLite for local dev)
-- Fixed upload API to use base64 data URLs on Vercel (filesystem is read-only)
-- Added vercel.json with framework detection and function config
-- Created .env.example with Turso setup instructions
-- Updated .gitignore to allow .env.example
-- Reduced Prisma logging to avoid verbose output issues
-- All routes verified working: /, /cpanel, /api/blog, /api/videos, /api/settings
+- Diagnosed the "Application error: a client-side exception has occurred" issue on Vercel
+- Root cause: Prisma + SQLite doesn't work on Vercel's serverless environment (no persistent filesystem)
+- API routes returned error objects `{error: "Failed to fetch blog posts"}` instead of arrays
+- Client-side code crashed when trying to use `.map()` on the error object
+- Fixed `src/lib/db.ts` to auto-detect Turso LibSQL vs local SQLite based on DATABASE_URL
+- Fixed client-side error handling in BlogPage.tsx and VideosPage.tsx (check `res.ok` and `Array.isArray(data)`)
+- Fixed PrismaLibSql export name (was PrismaLibSQL, correct is PrismaLibSql)
+- Used dynamic `require()` in db.ts to avoid Turbopack bundling issues
+- Created `scripts/setup-turso.ts` for creating schema and seeding Turso database
+- Configured .env with user's Turso credentials
+- Successfully pushed schema and seeded data to Turso (6 blog posts, 6 videos)
+- Verified API routes return correct data from Turso
+- Main page, blog API, and videos API all working
 
 Stage Summary:
-- Vercel deployment error fixed by removing standalone output mode
-- Database strategy: SQLite locally, LibSQL/Turso for Vercel production
-- File upload strategy: base64 data URLs for Vercel, local file storage for dev
-- All API routes and pages return 200 status
-- Lint passes with 0 errors (2 minor warnings)
+- App now works with both local SQLite and Turso LibSQL
+- On Vercel, DATABASE_URL must start with `libsql://` and DATABASE_AUTH_TOKEN must be set
+- Client-side components handle API errors gracefully without crashing
+- Turso database has 6 blog posts and 6 videos seeded
+- All API routes verified working with Turso connection

@@ -54,12 +54,20 @@ export default function BlogPage() {
 
   useEffect(() => {
     fetch("/api/blog")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch");
+        return res.json();
+      })
       .then((data) => {
-        setPosts(data);
+        if (Array.isArray(data)) {
+          setPosts(data);
+        }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setPosts([]);
+        setLoading(false);
+      });
   }, []);
 
   const categories = [

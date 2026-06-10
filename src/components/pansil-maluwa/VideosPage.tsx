@@ -46,13 +46,21 @@ export default function VideosPage() {
 
   useEffect(() => {
     fetch("/api/videos")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch");
+        return res.json();
+      })
       .then((data) => {
-        setVideos(data);
-        if (data.length > 0) setActiveVideo(data[0]);
+        if (Array.isArray(data)) {
+          setVideos(data);
+          if (data.length > 0) setActiveVideo(data[0]);
+        }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setVideos([]);
+        setLoading(false);
+      });
   }, []);
 
   const categories = ["All", ...Array.from(new Set(videos.map((v) => v.category)))];
