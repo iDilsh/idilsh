@@ -1,23 +1,46 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Manrope, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  variable: "--font-ibm-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "PixelForge - Online Image Editor",
-  description: "A powerful browser-based image editor. Create, edit, and export images directly in your browser.",
-  keywords: ["image editor", "photo editor", "online editor", "PixelForge", "Photopea alternative", "Canva alternative"],
-  authors: [{ name: "PixelForge Team" }],
+  title: "Pansil Maluwa — Buddhist Community",
+  description:
+    "A sacred digital space for Buddhist teachings, sermons, and community. Explore dharma, meditation, and the path to enlightenment with Pansil Maluwa.",
+  keywords: [
+    "Buddhism",
+    "Pansil Maluwa",
+    "Dharma",
+    "Sermons",
+    "Meditation",
+    "Buddhist Community",
+  ],
+  authors: [{ name: "Pansil Maluwa" }],
+  openGraph: {
+    title: "Pansil Maluwa — Buddhist Community",
+    description:
+      "A sacred digital space for Buddhist teachings, sermons, and community.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -26,9 +49,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+        />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${fraunces.variable} ${manrope.variable} ${ibmPlexMono.variable} antialiased bg-background text-foreground`}
       >
         {children}
         <Toaster />
