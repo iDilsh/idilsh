@@ -7,6 +7,12 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient(): PrismaClient {
   const databaseUrl = process.env.DATABASE_URL || ''
 
+  // If no DATABASE_URL is set, create a basic client (will fail on queries, but won't crash at build time)
+  if (!databaseUrl) {
+    console.warn('DATABASE_URL is not set. Database operations will fail.')
+    return new PrismaClient({ log: ['error'] })
+  }
+
   // If using Turso/LibSQL (cloud), use the adapter
   if (databaseUrl.startsWith('libsql://')) {
     // Use dynamic require to avoid bundling issues with Turbopack
@@ -28,6 +34,22 @@ function createPrismaClient(): PrismaClient {
   return new PrismaClient({ log: ['error'] })
 }
 
-export const db = globalForPrisma.prisma ?? createPrismaClient()
+// Use lazy initialization to avoid creating the client during Vercel build
+// when environment variables are not yet available
+function getDb(): PrismaClient {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient()
+  }
+  return globalForPrisma.prisma
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+export const db = new Proxy({} as PrismaClient, {
+  get(_target, prop, receiver) {
+    const instance = getDb()
+    const value = Reflect.get(instance, prop, receiver)
+    if (typeof value === 'function') {
+      return value.bind(instance)
+    }
+    return value
+  },
+})

@@ -105,9 +105,15 @@ export default function CPanelPage() {
   const fetchBlogPosts = useCallback(async () => {
     try {
       const res = await fetch("/api/blog?all=true");
+      if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
-      setBlogPosts(data);
+      if (Array.isArray(data)) {
+        setBlogPosts(data);
+      } else {
+        setBlogPosts([]);
+      }
     } catch {
+      setBlogPosts([]);
       showToast("Failed to load blog posts", "error");
     }
   }, [showToast]);
@@ -115,9 +121,15 @@ export default function CPanelPage() {
   const fetchVideos = useCallback(async () => {
     try {
       const res = await fetch("/api/videos?all=true");
+      if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
-      setVideos(data);
+      if (Array.isArray(data)) {
+        setVideos(data);
+      } else {
+        setVideos([]);
+      }
     } catch {
+      setVideos([]);
       showToast("Failed to load videos", "error");
     }
   }, [showToast]);
@@ -125,10 +137,15 @@ export default function CPanelPage() {
   const fetchSettings = useCallback(async () => {
     try {
       const res = await fetch("/api/settings");
+      if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
-      setSettings(data);
+      if (data && typeof data === "object" && !Array.isArray(data)) {
+        setSettings(data);
+      } else {
+        setSettings({});
+      }
     } catch {
-      // Settings might be empty, that's ok
+      setSettings({});
     }
   }, []);
 
