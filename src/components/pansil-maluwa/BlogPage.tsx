@@ -49,25 +49,33 @@ const categoryColors: Record<string, string> = {
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>("All");
 
-  useEffect(() => {
-    fetch("/api/blog")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch");
-        return res.json();
-      })
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setPosts(data);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
+  const fetchPosts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/blog");
+      if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setPosts(data);
+      } else {
         setPosts([]);
-        setLoading(false);
-      });
+      }
+    } catch (err) {
+      console.error("Error fetching blog posts:", err);
+      setError("Failed to load blog posts. Please try again.");
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
   }, []);
 
   const categories = [
@@ -417,7 +425,20 @@ export default function BlogPage() {
             </motion.div>
           )}
 
-          {!loading && filteredPosts.length === 0 && (
+          {!loading && error && (
+            <div className="text-center py-20">
+              <BookOpen className="w-12 h-12 text-warm-light mx-auto mb-4" />
+              <p className="font-manrope text-warm mb-4">{error}</p>
+              <button
+                onClick={fetchPosts}
+                className="font-manrope text-sm px-6 py-2 bg-saffron text-white rounded-full hover:bg-saffron-dark transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+
+          {!loading && !error && filteredPosts.length === 0 && (
             <div className="text-center py-20">
               <BookOpen className="w-12 h-12 text-warm-light mx-auto mb-4" />
               <p className="font-manrope text-warm">

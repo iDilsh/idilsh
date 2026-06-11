@@ -41,26 +41,34 @@ const categoryColors: Record<string, string> = {
 export default function VideosPage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeVideo, setActiveVideo] = useState<Video | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>("All");
 
-  useEffect(() => {
-    fetch("/api/videos")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch");
-        return res.json();
-      })
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setVideos(data);
-          if (data.length > 0) setActiveVideo(data[0]);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
+  const fetchVideos = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/videos");
+      if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setVideos(data);
+        if (data.length > 0) setActiveVideo(data[0]);
+      } else {
         setVideos([]);
-        setLoading(false);
-      });
+      }
+    } catch (err) {
+      console.error("Error fetching videos:", err);
+      setError("Failed to load videos. Please try again.");
+      setVideos([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVideos();
   }, []);
 
   const categories = ["All", ...Array.from(new Set(videos.map((v) => v.category)))];
@@ -253,7 +261,20 @@ export default function VideosPage() {
             </motion.div>
           )}
 
-          {!loading && filteredVideos.length === 0 && (
+          {!loading && error && (
+            <div className="text-center py-20">
+              <PlayCircle className="w-12 h-12 text-warm-light mx-auto mb-4" />
+              <p className="font-manrope text-warm mb-4">{error}</p>
+              <button
+                onClick={fetchVideos}
+                className="font-manrope text-sm px-6 py-2 bg-saffron text-white rounded-full hover:bg-saffron-dark transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+
+          {!loading && !error && filteredVideos.length === 0 && (
             <div className="text-center py-20">
               <PlayCircle className="w-12 h-12 text-warm-light mx-auto mb-4" />
               <p className="font-manrope text-warm">
