@@ -18,7 +18,7 @@ function createPrismaClient(): PrismaClient {
     // Use dynamic require to avoid bundling issues with Turbopack
     // These modules are only needed on Vercel/cloud deployments
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { PrismaLibSql } = require('@prisma/adapter-libsql')
+    const { PrismaLibSQL } = require('@prisma/adapter-libsql')
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { createClient } = require('@libsql/client')
 
@@ -26,7 +26,7 @@ function createPrismaClient(): PrismaClient {
       url: databaseUrl,
       authToken: process.env.DATABASE_AUTH_TOKEN || '',
     })
-    const adapter = new PrismaLibSql(libsql)
+    const adapter = new PrismaLibSQL(libsql)
     return new PrismaClient({ adapter, log: ['error'] })
   }
 
