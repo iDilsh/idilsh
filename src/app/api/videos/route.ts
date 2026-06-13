@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { execute, formatVideo } from "@/lib/db";
+import { getVideos } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   try {
     const includeUnpublished = req.nextUrl.searchParams.get("all") === "true";
-
-    const result = includeUnpublished
-      ? await execute("SELECT * FROM Video ORDER BY createdAt DESC")
-      : await execute("SELECT * FROM Video WHERE published = 1 ORDER BY createdAt DESC");
-
-    const videos = result.rows.map((row) => formatVideo(row));
+    const videos = await getVideos(includeUnpublished);
     return NextResponse.json(videos);
   } catch (error) {
     console.error("Error fetching videos:", error);
