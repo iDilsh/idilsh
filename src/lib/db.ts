@@ -43,8 +43,9 @@ export interface DbResult {
 // ============ Database Mode Detection ============
 
 function getDatabaseMode(): 'supabase' | 'local' {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  if (url) return 'supabase';
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_KEY;
+  if (url && key) return 'supabase';
   return 'local';
 }
 
@@ -54,8 +55,11 @@ let cachedSupabase: SupabaseClient | null = null;
 
 function getSupabase(): SupabaseClient {
   if (!cachedSupabase) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL!;
-    const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_KEY;
+    if (!url || !key) {
+      throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_KEY environment variables');
+    }
     cachedSupabase = createClient(url, key, {
       auth: { persistSession: false },
     });
@@ -137,7 +141,7 @@ export async function getBlogPosts(includeUnpublished = false): Promise<BlogPost
     const supabase = getSupabase();
     let query = supabase.from('BlogPost').select('*').order('createdAt', { ascending: false });
     if (!includeUnpublished) {
-      query = query.eq('published', true);
+      query = query.eq('published', 1);
     }
     const { data, error } = await query;
     if (error) throw new Error(`Supabase error: ${error.message}`);
@@ -267,7 +271,7 @@ export async function getVideos(includeUnpublished = false): Promise<Video[]> {
     const supabase = getSupabase();
     let query = supabase.from('Video').select('*').order('createdAt', { ascending: false });
     if (!includeUnpublished) {
-      query = query.eq('published', true);
+      query = query.eq('published', 1);
     }
     const { data, error } = await query;
     if (error) throw new Error(`Supabase error: ${error.message}`);

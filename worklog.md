@@ -86,3 +86,36 @@ Stage Summary:
 - Key env variables for Vercel: NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_KEY
 - Files modified: src/lib/db.ts, all 8 API route files, .env, .env.example
 - New files: scripts/setup-supabase.sql
+
+---
+Task ID: 4
+Agent: Main Agent
+Task: Fix "Failed to load videos" error on Vercel + clean up all unnecessary files
+
+Work Log:
+- Found CRITICAL BUG: Supabase queries used `.eq('published', true)` but the published column is INTEGER (0/1) in PostgreSQL
+  - PostgreSQL does NOT support implicit boolean = integer comparison
+  - This caused 0 results returned → "Failed to load videos/blog posts" on Vercel
+  - Fixed: Changed `.eq('published', true)` → `.eq('published', 1)` in both getBlogPosts and getVideos
+- Improved database mode detection: now requires BOTH NEXT_PUBLIC_SUPABASE_URL AND SUPABASE_SERVICE_KEY (previously only checked URL)
+- Added clear error message when Supabase env vars are missing
+- Deleted 22 screenshot files from root directory
+- Deleted old database scripts: setup-turso.ts, setup-neon.ts
+- Deleted entire prisma/ directory (no longer used by runtime code)
+- Deleted examples/ and download/ directories (unrelated to app)
+- Cleaned upload/ directory contents
+- Deleted 30 unused shadcn UI components (kept only 17 actually used)
+- Removed 41 unused npm packages including: @neondatabase/serverless, @prisma/adapter-libsql, @prisma/client, prisma, next-auth, next-intl, zustand, uuid, sharp, @dnd-kit/*, @tanstack/*, recharts, z-ai-web-dev-sdk, cmdk, vaul, sonner, input-otp, react-resizable-panels, react-day-picker, react-syntax-highlighter, embla-carousel-react
+- Cleaned up package.json: removed dead scripts (setup-neon, db:push, db:generate, db:migrate, db:reset)
+- Renamed project from "nextjs_tailwind_shadcn_ts" to "pansil-maluwa"
+- All APIs tested and working: Blog GET/POST/PUT/DELETE, Videos GET/POST/PUT/DELETE, Settings GET/POST
+- Verified with Agent Browser: Blog (6 posts), Videos (6 videos with YouTube embeds)
+- Lint passes with 0 errors, zero runtime errors in dev log
+
+Stage Summary:
+- Root cause of "Failed to load videos" on Vercel: published column type mismatch (boolean vs integer)
+- Fixed by using .eq('published', 1) instead of .eq('published', true) for Supabase queries
+- Major cleanup: removed 22 screenshots, 30 unused UI components, 41 unused npm packages
+- Project size significantly reduced, build time should improve on Vercel
+- Files modified: src/lib/db.ts, package.json
+- Files deleted: 22 screenshots, setup-turso.ts, setup-neon.ts, prisma/*, examples/*, download/*, 30 unused UI components
