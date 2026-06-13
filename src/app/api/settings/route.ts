@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { execute } from "@/lib/db";
 
 export async function GET() {
   try {
-    const settings = await db.siteSetting.findMany();
+    const result = await execute("SELECT * FROM SiteSetting");
+
     const settingsMap: Record<string, string> = {};
-    settings.forEach((s) => {
-      settingsMap[s.key] = s.value;
+    result.rows.forEach((row) => {
+      settingsMap[row.key as string] = row.value as string;
     });
+
     return NextResponse.json(settingsMap);
   } catch (error) {
     console.error("Error fetching settings:", error);

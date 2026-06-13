@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { execute, generateId, formatBlogPost } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,17 +10,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
-    const post = await db.blogPost.create({
-      data: {
-        title,
-        excerpt: excerpt || "",
-        content: content || "",
-        imageUrl: imageUrl || null,
-        category: category || "Dharma",
-        published: published ?? false,
-      },
-    });
+    const id = generateId();
+    const now = new Date().toISOString();
+    const publishedInt = published ? 1 : 0;
 
+    await execute(
+      `INSERT INTO BlogPost (id, title, excerpt, content, imageUrl, category, published, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, title, excerpt || "", content || "", imageUrl || null, category || "Dharma", publishedInt, now, now]
+    );
+
+    // Fetch the created post
+    const result = await execute("SELECT * FROM BlogPost WHERE id = ?", [id]);
+
+    if (result.rows.length === 0) {
+      return NextResponse.json(
+        { error: "Failed to create blog post" },
+        { status: 500 }
+      );
+    }
+
+    const post = formatBlogPost(result.rows[0]);
     return NextResponse.json(post, { status: 201 });
   } catch (error) {
     console.error("Error creating blog post:", error);
