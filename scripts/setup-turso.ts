@@ -1,69 +1,71 @@
-import { createClient } from '@libsql/client';
+import { createClient } from '@libsql/client'
+
+const TURSO_URL = process.env.DATABASE_URL!
+const TURSO_TOKEN = process.env.DATABASE_AUTH_TOKEN || ''
 
 async function main() {
-  console.log('🔧 Setting up local SQLite database schema...');
+  console.log('🔧 Setting up Turso database schema...')
 
-  const db = createClient({ url: 'file:./db/custom.db' });
+  const db = createClient({
+    url: TURSO_URL,
+    authToken: TURSO_TOKEN,
+  })
 
   // Create BlogPost table
   await db.execute(`
-    CREATE TABLE IF NOT EXISTS "BlogPost" (
+    CREATE TABLE IF NOT EXISTS BlogPost (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
       excerpt TEXT NOT NULL DEFAULT '',
       content TEXT NOT NULL DEFAULT '',
-      "imageUrl" TEXT,
+      imageUrl TEXT,
       category TEXT NOT NULL DEFAULT 'Dharma',
       published INTEGER NOT NULL DEFAULT 0,
-      "createdAt" TEXT NOT NULL DEFAULT (datetime('now')),
-      "updatedAt" TEXT NOT NULL DEFAULT (datetime('now'))
+      createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+      updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
     )
-  `);
-  console.log('✅ BlogPost table created');
+  `)
+  console.log('✅ BlogPost table created')
 
   // Create Video table
   await db.execute(`
-    CREATE TABLE IF NOT EXISTS "Video" (
+    CREATE TABLE IF NOT EXISTS Video (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
       description TEXT,
-      "youtubeId" TEXT NOT NULL,
+      youtubeId TEXT NOT NULL,
       thumbnail TEXT,
       category TEXT NOT NULL DEFAULT 'Sermon',
       published INTEGER NOT NULL DEFAULT 1,
-      "createdAt" TEXT NOT NULL DEFAULT (datetime('now')),
-      "updatedAt" TEXT NOT NULL DEFAULT (datetime('now'))
+      createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+      updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
     )
-  `);
-  console.log('✅ Video table created');
+  `)
+  console.log('✅ Video table created')
 
   // Create SiteSetting table
   await db.execute(`
-    CREATE TABLE IF NOT EXISTS "SiteSetting" (
+    CREATE TABLE IF NOT EXISTS SiteSetting (
       id TEXT PRIMARY KEY,
       key TEXT NOT NULL UNIQUE,
       value TEXT NOT NULL DEFAULT ''
     )
-  `);
-  console.log('✅ SiteSetting table created');
+  `)
+  console.log('✅ SiteSetting table created')
 
   // Check if data already exists
-  const existingPosts = await db.execute('SELECT COUNT(*) as count FROM "BlogPost"');
-  const existingVideos = await db.execute('SELECT COUNT(*) as count FROM "Video"');
+  const existingPosts = await db.execute('SELECT COUNT(*) as count FROM BlogPost')
+  const existingVideos = await db.execute('SELECT COUNT(*) as count FROM Video')
 
-  const postCount = Number(existingPosts.rows[0].count);
-  const videoCount = Number(existingVideos.rows[0].count);
-
-  if (postCount > 0 || videoCount > 0) {
-    console.log('⚠️  Database already has data. Skipping seed.');
-    console.log(`   BlogPost: ${postCount} rows`);
-    console.log(`   Video: ${videoCount} rows`);
-    db.close();
-    return;
+  if (Number(existingPosts.rows[0].count) > 0 || Number(existingVideos.rows[0].count) > 0) {
+    console.log('⚠️  Database already has data. Skipping seed.')
+    console.log(`   BlogPost: ${existingPosts.rows[0].count} rows`)
+    console.log(`   Video: ${existingVideos.rows[0].count} rows`)
+    return
   }
 
   // Seed blog posts
-  console.log('🌱 Seeding blog posts...');
+  console.log('🌱 Seeding blog posts...')
   const posts = [
     {
       id: 'cmq7gjq7c0000q77s4bvi99x5',
@@ -119,19 +121,19 @@ async function main() {
       category: 'Meditation',
       published: 1,
     },
-  ];
+  ]
 
   for (const post of posts) {
     await db.execute({
-      sql: `INSERT INTO "BlogPost" (id, title, excerpt, content, "imageUrl", category, published, "createdAt", "updatedAt")
+      sql: `INSERT INTO BlogPost (id, title, excerpt, content, imageUrl, category, published, createdAt, updatedAt)
             VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
       args: [post.id, post.title, post.excerpt, post.content, post.imageUrl, post.category, post.published],
-    });
+    })
   }
-  console.log(`✅ Seeded ${posts.length} blog posts`);
+  console.log(`✅ Seeded ${posts.length} blog posts`)
 
   // Seed videos
-  console.log('🌱 Seeding videos...');
+  console.log('🌱 Seeding videos...')
   const videos = [
     {
       id: 'cmq7gjq7c0006q77svw4k7e9l',
@@ -181,46 +183,25 @@ async function main() {
       category: 'Scripture',
       published: 1,
     },
-  ];
+  ]
 
   for (const video of videos) {
     await db.execute({
-      sql: `INSERT INTO "Video" (id, title, description, "youtubeId", category, published, "createdAt", "updatedAt")
+      sql: `INSERT INTO Video (id, title, description, youtubeId, category, published, createdAt, updatedAt)
             VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
       args: [video.id, video.title, video.description || null, video.youtubeId, video.category, video.published],
-    });
+    })
   }
-  console.log(`✅ Seeded ${videos.length} videos`);
-
-  // Seed default settings
-  console.log('🌱 Seeding default settings...');
-  const settings = [
-    { key: 'siteName', value: 'Pansil Maluwa' },
-    { key: 'siteDescription', value: 'A Buddhist temple website dedicated to sharing the Dharma' },
-    { key: 'heroTitle', value: 'Welcome to Pansil Maluwa' },
-    { key: 'heroSubtitle', value: 'Discover the path of wisdom and compassion' },
-  ];
-
-  for (const setting of settings) {
-    const id = `cs${Date.now().toString(36)}${Math.random().toString(36).substring(2, 10)}`;
-    await db.execute({
-      sql: 'INSERT INTO "SiteSetting" (id, key, value) VALUES (?, ?, ?)',
-      args: [id, setting.key, setting.value],
-    });
-  }
-  console.log(`✅ Seeded ${settings.length} settings`);
+  console.log(`✅ Seeded ${videos.length} videos`)
 
   // Verify
-  const postCount2 = await db.execute('SELECT COUNT(*) as count FROM "BlogPost"');
-  const videoCount2 = await db.execute('SELECT COUNT(*) as count FROM "Video"');
-  const settingCount = await db.execute('SELECT COUNT(*) as count FROM "SiteSetting"');
-  console.log(`\n🎉 Local database ready! ${postCount2.rows[0].count} blog posts, ${videoCount2.rows[0].count} videos, ${settingCount.rows[0].count} settings`);
-
-  db.close();
+  const postCount = await db.execute('SELECT COUNT(*) as count FROM BlogPost')
+  const videoCount = await db.execute('SELECT COUNT(*) as count FROM Video')
+  console.log(`\n🎉 Database ready! ${postCount.rows[0].count} blog posts, ${videoCount.rows[0].count} videos`)
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error:', e);
-    process.exit(1);
-  });
+    console.error('❌ Error:', e)
+    process.exit(1)
+  })

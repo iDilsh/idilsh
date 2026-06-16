@@ -1,12 +1,21 @@
-import { createClient } from '@libsql/client';
+import { neon } from '@neondatabase/serverless';
+
+const NEON_URL = process.env.NEON_DATABASE_URL!;
 
 async function main() {
-  console.log('🔧 Setting up local SQLite database schema...');
+  if (!NEON_URL) {
+    console.error('❌ NEON_DATABASE_URL environment variable is required');
+    console.error('   Set it to your Neon PostgreSQL connection string');
+    console.error('   Example: postgresql://username:password@ep-xxx.region.aws.neon.tech/neondb');
+    process.exit(1);
+  }
 
-  const db = createClient({ url: 'file:./db/custom.db' });
+  console.log('🔧 Setting up Neon PostgreSQL database schema...');
+
+  const sql = neon(NEON_URL);
 
   // Create BlogPost table
-  await db.execute(`
+  await sql.unsafe(`
     CREATE TABLE IF NOT EXISTS "BlogPost" (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
@@ -15,14 +24,14 @@ async function main() {
       "imageUrl" TEXT,
       category TEXT NOT NULL DEFAULT 'Dharma',
       published INTEGER NOT NULL DEFAULT 0,
-      "createdAt" TEXT NOT NULL DEFAULT (datetime('now')),
-      "updatedAt" TEXT NOT NULL DEFAULT (datetime('now'))
+      "createdAt" TEXT NOT NULL DEFAULT (TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"')),
+      "updatedAt" TEXT NOT NULL DEFAULT (TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))
     )
   `);
   console.log('✅ BlogPost table created');
 
   // Create Video table
-  await db.execute(`
+  await sql.unsafe(`
     CREATE TABLE IF NOT EXISTS "Video" (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
@@ -31,14 +40,14 @@ async function main() {
       thumbnail TEXT,
       category TEXT NOT NULL DEFAULT 'Sermon',
       published INTEGER NOT NULL DEFAULT 1,
-      "createdAt" TEXT NOT NULL DEFAULT (datetime('now')),
-      "updatedAt" TEXT NOT NULL DEFAULT (datetime('now'))
+      "createdAt" TEXT NOT NULL DEFAULT (TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"')),
+      "updatedAt" TEXT NOT NULL DEFAULT (TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))
     )
   `);
   console.log('✅ Video table created');
 
   // Create SiteSetting table
-  await db.execute(`
+  await sql.unsafe(`
     CREATE TABLE IF NOT EXISTS "SiteSetting" (
       id TEXT PRIMARY KEY,
       key TEXT NOT NULL UNIQUE,
@@ -48,17 +57,16 @@ async function main() {
   console.log('✅ SiteSetting table created');
 
   // Check if data already exists
-  const existingPosts = await db.execute('SELECT COUNT(*) as count FROM "BlogPost"');
-  const existingVideos = await db.execute('SELECT COUNT(*) as count FROM "Video"');
+  const existingPosts = await sql.unsafe('SELECT COUNT(*) as count FROM "BlogPost"');
+  const existingVideos = await sql.unsafe('SELECT COUNT(*) as count FROM "Video"');
 
-  const postCount = Number(existingPosts.rows[0].count);
-  const videoCount = Number(existingVideos.rows[0].count);
+  const postCount = Number(existingPosts[0].count);
+  const videoCount = Number(existingVideos[0].count);
 
   if (postCount > 0 || videoCount > 0) {
     console.log('⚠️  Database already has data. Skipping seed.');
     console.log(`   BlogPost: ${postCount} rows`);
     console.log(`   Video: ${videoCount} rows`);
-    db.close();
     return;
   }
 
@@ -122,11 +130,11 @@ async function main() {
   ];
 
   for (const post of posts) {
-    await db.execute({
-      sql: `INSERT INTO "BlogPost" (id, title, excerpt, content, "imageUrl", category, published, "createdAt", "updatedAt")
-            VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-      args: [post.id, post.title, post.excerpt, post.content, post.imageUrl, post.category, post.published],
-    });
+    await sql.unsafe(
+      `INSERT INTO "BlogPost" (id, title, excerpt, content, "imageUrl", category, published, "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))`,
+      [post.id, post.title, post.excerpt, post.content, post.imageUrl, post.category, post.published]
+    );
   }
   console.log(`✅ Seeded ${posts.length} blog posts`);
 
@@ -184,11 +192,11 @@ async function main() {
   ];
 
   for (const video of videos) {
-    await db.execute({
-      sql: `INSERT INTO "Video" (id, title, description, "youtubeId", category, published, "createdAt", "updatedAt")
-            VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-      args: [video.id, video.title, video.description || null, video.youtubeId, video.category, video.published],
-    });
+    await sql.unsafe(
+      `INSERT INTO "Video" (id, title, description, "youtubeId", category, published, "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))`,
+      [video.id, video.title, video.description || null, video.youtubeId, video.category, video.published]
+    );
   }
   console.log(`✅ Seeded ${videos.length} videos`);
 
@@ -203,20 +211,18 @@ async function main() {
 
   for (const setting of settings) {
     const id = `cs${Date.now().toString(36)}${Math.random().toString(36).substring(2, 10)}`;
-    await db.execute({
-      sql: 'INSERT INTO "SiteSetting" (id, key, value) VALUES (?, ?, ?)',
-      args: [id, setting.key, setting.value],
-    });
+    await sql.unsafe(
+      `INSERT INTO "SiteSetting" (id, key, value) VALUES ($1, $2, $3)`,
+      [id, setting.key, setting.value]
+    );
   }
   console.log(`✅ Seeded ${settings.length} settings`);
 
   // Verify
-  const postCount2 = await db.execute('SELECT COUNT(*) as count FROM "BlogPost"');
-  const videoCount2 = await db.execute('SELECT COUNT(*) as count FROM "Video"');
-  const settingCount = await db.execute('SELECT COUNT(*) as count FROM "SiteSetting"');
-  console.log(`\n🎉 Local database ready! ${postCount2.rows[0].count} blog posts, ${videoCount2.rows[0].count} videos, ${settingCount.rows[0].count} settings`);
-
-  db.close();
+  const postCount2 = await sql.unsafe('SELECT COUNT(*) as count FROM "BlogPost"');
+  const videoCount2 = await sql.unsafe('SELECT COUNT(*) as count FROM "Video"');
+  const settingCount = await sql.unsafe('SELECT COUNT(*) as count FROM "SiteSetting"');
+  console.log(`\n🎉 Database ready! ${postCount2[0].count} blog posts, ${videoCount2[0].count} videos, ${settingCount[0].count} settings`);
 }
 
 main()

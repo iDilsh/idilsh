@@ -12,6 +12,7 @@ import {
   Share2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import ReactMarkdown from "react-markdown";
 
 interface BlogPost {
   id: string;
@@ -126,7 +127,7 @@ export default function BlogPage() {
               {/* Back button */}
               <button
                 onClick={() => setSelectedPost(null)}
-                className="inline-flex items-center gap-2 font-manrope text-sm text-warm hover:text-saffron transition-colors mb-8 group"
+                className="inline-flex items-center gap-2 font-sinhala text-sm text-warm hover:text-saffron transition-colors mb-8 group"
               >
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                 Back to all articles
@@ -158,7 +159,7 @@ export default function BlogPage() {
               </h1>
 
               {/* Excerpt */}
-              <p className="font-manrope text-warm text-lg leading-relaxed mb-8">
+              <p className="font-sinhala text-warm text-lg leading-relaxed mb-8">
                 {selectedPost.excerpt}
               </p>
 
@@ -181,18 +182,8 @@ export default function BlogPage() {
         >
           <div className="max-w-3xl mx-auto">
             <article className="glass-2 rounded-3xl p-8 md:p-12">
-              <div className="font-manrope text-warm-dark/85 leading-[1.85] text-[16px] whitespace-pre-line">
-                {selectedPost.content.split("\n\n").map((paragraph, i) => (
-                  <motion.p
-                    key={i}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.3 + i * 0.05 }}
-                    className="mb-5 last:mb-0"
-                  >
-                    {paragraph}
-                  </motion.p>
-                ))}
+              <div className="md-preview-content font-sinhala text-[16px] leading-[1.85]">
+                <ReactMarkdown>{selectedPost.content}</ReactMarkdown>
               </div>
             </article>
 
@@ -200,7 +191,7 @@ export default function BlogPage() {
             <div className="flex items-center justify-between mt-10">
               <button
                 onClick={() => setSelectedPost(null)}
-                className="inline-flex items-center gap-2 font-manrope text-sm text-warm hover:text-saffron transition-colors group"
+                className="inline-flex items-center gap-2 font-sinhala text-sm text-warm hover:text-saffron transition-colors group"
               >
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                 All articles
@@ -215,7 +206,7 @@ export default function BlogPage() {
                     });
                   }
                 }}
-                className="inline-flex items-center gap-2 font-manrope text-sm text-warm hover:text-saffron transition-colors glass-1 px-4 py-2 rounded-full"
+                className="inline-flex items-center gap-2 font-sinhala text-sm text-warm hover:text-saffron transition-colors glass-1 px-4 py-2 rounded-full"
               >
                 <Share2 className="w-3.5 h-3.5" />
                 Share
@@ -266,10 +257,10 @@ export default function BlogPage() {
                               {formatShortDate(post.createdAt)}
                             </span>
                           </div>
-                          <h4 className="font-fraunces text-base font-semibold text-warm-dark group-hover:text-saffron transition-colors line-clamp-2 mb-2">
+                          <h4 className="font-sinhala text-base font-semibold text-warm-dark group-hover:text-saffron transition-colors line-clamp-2 mb-2">
                             {post.title}
                           </h4>
-                          <p className="font-manrope text-warm text-sm line-clamp-2">
+                          <p className="font-sinhala text-warm text-sm line-clamp-2">
                             {post.excerpt}
                           </p>
                         </div>
@@ -302,7 +293,7 @@ export default function BlogPage() {
             <h1 className="font-fraunces text-4xl md:text-6xl font-bold text-warm-dark mb-6">
               Words of <span className="text-saffron italic">Wisdom</span>
             </h1>
-            <p className="font-manrope text-warm text-lg max-w-2xl mx-auto">
+            <p className="font-sinhala text-warm text-lg max-w-2xl mx-auto">
               Explore our collection of articles on Buddhist philosophy,
               meditation practice, and the art of mindful living.
             </p>
@@ -324,7 +315,7 @@ export default function BlogPage() {
               <button
                 key={cat}
                 onClick={() => setActiveFilter(cat)}
-                className={`font-manrope text-sm px-4 py-1.5 rounded-full transition-all duration-300 ${
+                className={`font-sinhala text-sm px-4 py-1.5 rounded-full transition-all duration-300 ${
                   activeFilter === cat
                     ? "bg-saffron text-white shadow-md shadow-saffron/20"
                     : "glass-1 text-warm hover:text-saffron"
@@ -401,16 +392,16 @@ export default function BlogPage() {
                       </span>
                     </div>
 
-                    <h3 className="font-fraunces text-lg font-semibold text-warm-dark mb-3 group-hover:text-saffron transition-colors line-clamp-2">
+                    <h3 className="font-sinhala text-lg font-semibold text-warm-dark mb-3 group-hover:text-saffron transition-colors line-clamp-2">
                       {post.title}
                     </h3>
 
-                    <p className="font-manrope text-warm text-sm leading-relaxed line-clamp-3 mb-4">
+                    <p className="font-sinhala text-warm text-sm leading-relaxed line-clamp-3 mb-4">
                       {post.excerpt}
                     </p>
 
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-saffron text-sm font-manrope group-hover:gap-2 transition-all">
+                      <div className="flex items-center gap-1 text-saffron text-sm font-sinhala group-hover:gap-2 transition-all">
                         <BookOpen className="w-3.5 h-3.5" />
                         <span>Read more</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -428,10 +419,10 @@ export default function BlogPage() {
           {!loading && error && (
             <div className="text-center py-20">
               <BookOpen className="w-12 h-12 text-warm-light mx-auto mb-4" />
-              <p className="font-manrope text-warm mb-4">{error}</p>
+              <p className="font-sinhala text-warm mb-4">{error}</p>
               <button
                 onClick={fetchPosts}
-                className="font-manrope text-sm px-6 py-2 bg-saffron text-white rounded-full hover:bg-saffron-dark transition-colors"
+                className="font-sinhala text-sm px-6 py-2 bg-saffron text-white rounded-full hover:bg-saffron-dark transition-colors"
               >
                 Try Again
               </button>
@@ -441,7 +432,7 @@ export default function BlogPage() {
           {!loading && !error && filteredPosts.length === 0 && (
             <div className="text-center py-20">
               <BookOpen className="w-12 h-12 text-warm-light mx-auto mb-4" />
-              <p className="font-manrope text-warm">
+              <p className="font-sinhala text-warm">
                 No articles found in this category.
               </p>
             </div>

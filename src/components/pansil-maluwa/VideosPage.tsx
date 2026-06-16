@@ -95,7 +95,7 @@ export default function VideosPage() {
               Dharma{" "}
               <span className="text-saffron italic">Discourses</span>
             </h1>
-            <p className="font-manrope text-warm text-lg max-w-2xl mx-auto">
+            <p className="font-sinhala text-warm text-lg max-w-2xl mx-auto">
               Watch and listen to Buddhist sermons, guided meditations, and
               teachings from respected monastics and teachers.
             </p>
@@ -140,7 +140,7 @@ export default function VideosPage() {
                     {activeVideo.title}
                   </h2>
                   {activeVideo.description && (
-                    <p className="font-manrope text-warm leading-relaxed">
+                    <p className="font-sinhala text-warm leading-relaxed">
                       {activeVideo.description}
                     </p>
                   )}
@@ -148,7 +148,7 @@ export default function VideosPage() {
                     href={`https://www.youtube.com/watch?v=${activeVideo.youtubeId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 mt-4 font-manrope text-sm text-saffron hover:text-saffron-dark transition-colors"
+                    className="inline-flex items-center gap-2 mt-4 font-sinhala text-sm text-saffron hover:text-saffron-dark transition-colors"
                   >
                     <ExternalLink className="w-4 h-4" />
                     Watch on YouTube
@@ -165,7 +165,7 @@ export default function VideosPage() {
               <button
                 key={cat}
                 onClick={() => setActiveFilter(cat)}
-                className={`font-manrope text-sm px-4 py-1.5 rounded-full transition-all duration-300 ${
+                className={`font-sinhala text-sm px-4 py-1.5 rounded-full transition-all duration-300 ${
                   activeFilter === cat
                     ? "bg-saffron text-white shadow-md shadow-saffron/20"
                     : "glass-1 text-warm hover:text-saffron"
@@ -246,11 +246,11 @@ export default function VideosPage() {
                       >
                         {video.category}
                       </Badge>
-                      <h3 className="font-fraunces text-base font-semibold text-warm-dark group-hover:text-saffron transition-colors line-clamp-2">
+                      <h3 className="font-sinhala text-base font-semibold text-warm-dark group-hover:text-saffron transition-colors line-clamp-2">
                         {video.title}
                       </h3>
                       {video.description && (
-                        <p className="font-manrope text-warm text-sm mt-2 line-clamp-2">
+                        <p className="font-sinhala text-warm text-sm mt-2 line-clamp-2">
                           {video.description}
                         </p>
                       )}
@@ -264,10 +264,10 @@ export default function VideosPage() {
           {!loading && error && (
             <div className="text-center py-20">
               <PlayCircle className="w-12 h-12 text-warm-light mx-auto mb-4" />
-              <p className="font-manrope text-warm mb-4">{error}</p>
+              <p className="font-sinhala text-warm mb-4">{error}</p>
               <button
                 onClick={fetchVideos}
-                className="font-manrope text-sm px-6 py-2 bg-saffron text-white rounded-full hover:bg-saffron-dark transition-colors"
+                className="font-sinhala text-sm px-6 py-2 bg-saffron text-white rounded-full hover:bg-saffron-dark transition-colors"
               >
                 Try Again
               </button>
@@ -277,7 +277,7 @@ export default function VideosPage() {
           {!loading && !error && filteredVideos.length === 0 && (
             <div className="text-center py-20">
               <PlayCircle className="w-12 h-12 text-warm-light mx-auto mb-4" />
-              <p className="font-manrope text-warm">
+              <p className="font-sinhala text-warm">
                 No videos found in this category.
               </p>
             </div>
