@@ -4,6 +4,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, Info, BookOpen, PlayCircle, Flower2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ThemeToggle from "./ThemeToggle";
 
 export type PageKey = "home" | "about" | "blog" | "videos";
 
@@ -91,6 +92,13 @@ export default function Navigation({
               )}
             </button>
           ))}
+          {/* Theme toggle in mobile nav */}
+          <div className="flex flex-col items-center gap-1">
+            <ThemeToggle />
+            <span className="text-[10px] font-manrope tracking-wide text-warm-dark/50">
+              Theme
+            </span>
+          </div>
         </div>
       </nav>
     </>

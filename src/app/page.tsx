@@ -9,6 +9,7 @@ import AboutPage from "@/components/pansil-maluwa/AboutPage";
 import BlogPage from "@/components/pansil-maluwa/BlogPage";
 import VideosPage from "@/components/pansil-maluwa/VideosPage";
 import Footer from "@/components/pansil-maluwa/Footer";
+import ThemeToggle from "@/components/pansil-maluwa/ThemeToggle";
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -61,10 +62,15 @@ export default function PansilMaluwa() {
             </button>
 
             {/* Navigation */}
-            <Navigation
-              activePage={activePage}
-              onPageChange={setActivePage}
-            />
+            <div className="flex items-center gap-3">
+              <Navigation
+                activePage={activePage}
+                onPageChange={setActivePage}
+              />
+              <div className="hidden md:block">
+                <ThemeToggle />
+              </div>
+            </div>
           </div>
         </div>
       </header>

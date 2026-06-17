@@ -10,9 +10,12 @@ import {
   ArrowLeft,
   Flower2,
   Share2,
+  Link as LinkIcon,
+  Check,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
+import { toast } from "@/hooks/use-toast";
 
 interface BlogPost {
   id: string;
@@ -198,18 +201,34 @@ export default function BlogPage() {
               </button>
 
               <button
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({
-                      title: selectedPost.title,
-                      text: selectedPost.excerpt,
+                onClick={async () => {
+                  const url = `${window.location.origin}/?blog=${selectedPost.id}`;
+                  try {
+                    await navigator.clipboard.writeText(url);
+                    toast({
+                      title: "Link copied!",
+                      description: "Article link has been copied to clipboard.",
+                    });
+                  } catch {
+                    // Fallback for older browsers
+                    const textArea = document.createElement("textarea");
+                    textArea.value = url;
+                    textArea.style.position = "fixed";
+                    textArea.style.opacity = "0";
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(textArea);
+                    toast({
+                      title: "Link copied!",
+                      description: "Article link has been copied to clipboard.",
                     });
                   }
                 }}
                 className="inline-flex items-center gap-2 font-sinhala text-sm text-warm hover:text-saffron transition-colors glass-1 px-4 py-2 rounded-full"
               >
-                <Share2 className="w-3.5 h-3.5" />
-                Share
+                <LinkIcon className="w-3.5 h-3.5" />
+                Copy Link
               </button>
             </div>
 

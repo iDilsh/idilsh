@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Manrope, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "next-themes";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -68,8 +69,15 @@ export default function RootLayout({
       <body
         className={`${fraunces.variable} ${manrope.variable} ${ibmPlexMono.variable} antialiased bg-background text-foreground`}
       >
-        {children}
-        <Toaster />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

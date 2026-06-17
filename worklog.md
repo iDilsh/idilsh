@@ -119,3 +119,28 @@ Stage Summary:
 - Project size significantly reduced, build time should improve on Vercel
 - Files modified: src/lib/db.ts, package.json
 - Files deleted: 22 screenshots, setup-turso.ts, setup-neon.ts, prisma/*, examples/*, download/*, 30 unused UI components
+
+---
+Task ID: 5
+Agent: Main Agent
+Task: Fix share button (copy article link) and add dark mode theme toggle
+
+Work Log:
+- Analyzed existing share button in BlogPage.tsx - it used navigator.share() without URL and no fallback
+- Replaced share button with "Copy Link" button that copies the article URL to clipboard
+- Added toast notification feedback when link is copied ("Link copied!")
+- Added fallback for older browsers using document.execCommand("copy")
+- Created ThemeToggle component with animated Sun/Moon icons using Framer Motion
+- Added ThemeProvider from next-themes to layout.tsx (was already installed but not configured)
+- Added ThemeToggle button to desktop header (next to navigation tabs)
+- Added ThemeToggle button to mobile bottom navigation bar
+- Both desktop and mobile toggles work independently, hidden/shown with responsive classes
+- Fixed lint error: extracted useMounted() hook to avoid setState-in-effect warning
+- Verified with Agent Browser: dark mode toggle works on both desktop and mobile, Copy Link shows toast
+
+Stage Summary:
+- Share button now copies article link (/?blog={id}) to clipboard with toast notification
+- Dark mode toggle fully functional: desktop (header) + mobile (bottom nav)
+- All CSS variables for .dark class were already defined in globals.css - just needed ThemeProvider activation
+- Files modified: BlogPage.tsx, layout.tsx, page.tsx, Navigation.tsx
+- New file: ThemeToggle.tsx

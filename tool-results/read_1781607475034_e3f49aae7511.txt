@@ -1,0 +1,1173 @@
+     1→"use client";
+     2→
+     3→import React, { useEffect, useState, useCallback } from "react";
+     4→import { motion, AnimatePresence } from "framer-motion";
+     5→import {
+     6→  LayoutDashboard,
+     7→  FileText,
+     8→  Video,
+     9→  Settings,
+    10→  Plus,
+    11→  Pencil,
+    12→  Trash2,
+    13→  Save,
+    14→  X,
+    15→  Eye,
+    16→  EyeOff,
+    17→  Upload,
+    18→  ArrowLeft,
+    19→  Flower2,
+    20→  Check,
+    21→  Loader2,
+    22→  AlertTriangle,
+    23→  Image as ImageIcon,
+    24→} from "lucide-react";
+    25→import { Button } from "@/components/ui/button";
+    26→import { Input } from "@/components/ui/input";
+    27→import { Label } from "@/components/ui/label";
+    28→import { Badge } from "@/components/ui/badge";
+    29→import { Switch } from "@/components/ui/switch";
+    30→import {
+    31→  Select,
+    32→  SelectContent,
+    33→  SelectItem,
+    34→  SelectTrigger,
+    35→  SelectValue,
+    36→} from "@/components/ui/select";
+    37→import {
+    38→  AlertDialog,
+    39→  AlertDialogAction,
+    40→  AlertDialogCancel,
+    41→  AlertDialogContent,
+    42→  AlertDialogDescription,
+    43→  AlertDialogFooter,
+    44→  AlertDialogHeader,
+    45→  AlertDialogTitle,
+    46→} from "@/components/ui/alert-dialog";
+    47→import MarkdownEditor from "@/components/cpanel/MarkdownEditor";
+    48→
+    49→// Types
+    50→interface BlogPost {
+    51→  id: string;
+    52→  title: string;
+    53→  excerpt: string;
+    54→  content: string;
+    55→  imageUrl: string | null;
+    56→  category: string;
+    57→  published: boolean;
+    58→  createdAt: string;
+    59→  updatedAt: string;
+    60→}
+    61→
+    62→interface VideoItem {
+    63→  id: string;
+    64→  title: string;
+    65→  description: string | null;
+    66→  youtubeId: string;
+    67→  thumbnail: string | null;
+    68→  category: string;
+    69→  published: boolean;
+    70→  createdAt: string;
+    71→  updatedAt: string;
+    72→}
+    73→
+    74→type PanelView = "dashboard" | "blog" | "blog-edit" | "videos" | "video-edit" | "settings";
+    75→
+    76→const blogCategories = ["Dharma", "Meditation", "Philosophy", "Tradition", "Scripture", "Practice"];
+    77→const videoCategories = ["Sermon", "Beginner", "Meditation", "History", "Dharma", "Scripture"];
+    78→
+    79→// ─── Main Component ────────────────────────────────────────────────────────
+    80→
+    81→export default function CPanelPage() {
+    82→  const [view, setView] = useState<PanelView>("dashboard");
+    83→  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+    84→  const [videos, setVideos] = useState<VideoItem[]>([]);
+    85→  const [settings, setSettings] = useState<Record<string, string>>({});
+    86→  const [loading, setLoading] = useState(true);
+    87→
+    88→  // Editing states
+    89→  const [editingBlog, setEditingBlog] = useState<Partial<BlogPost> | null>(null);
+    90→  const [editingVideo, setEditingVideo] = useState<Partial<VideoItem> | null>(null);
+    91→  const [isNewBlog, setIsNewBlog] = useState(false);
+    92→  const [isNewVideo, setIsNewVideo] = useState(false);
+    93→  const [saving, setSaving] = useState(false);
+    94→  const [deleteTarget, setDeleteTarget] = useState<{ type: "blog" | "video"; id: string; title: string } | null>(null);
+    95→
+    96→  // Toast state
+    97→  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+    98→
+    99→  const showToast = useCallback((message: string, type: "success" | "error" = "success") => {
+   100→    setToast({ message, type });
+   101→    setTimeout(() => setToast(null), 3000);
+   102→  }, []);
+   103→
+   104→  // Fetch data
+   105→  const fetchBlogPosts = useCallback(async () => {
+   106→    try {
+   107→      const res = await fetch("/api/blog?all=true");
+   108→      if (!res.ok) throw new Error("Failed to fetch");
+   109→      const data = await res.json();
+   110→      if (Array.isArray(data)) {
+   111→        setBlogPosts(data);
+   112→      } else {
+   113→        setBlogPosts([]);
+   114→      }
+   115→    } catch {
+   116→      setBlogPosts([]);
+   117→      showToast("Failed to load blog posts", "error");
+   118→    }
+   119→  }, [showToast]);
+   120→
+   121→  const fetchVideos = useCallback(async () => {
+   122→    try {
+   123→      const res = await fetch("/api/videos?all=true");
+   124→      if (!res.ok) throw new Error("Failed to fetch");
+   125→      const data = await res.json();
+   126→      if (Array.isArray(data)) {
+   127→        setVideos(data);
+   128→      } else {
+   129→        setVideos([]);
+   130→      }
+   131→    } catch {
+   132→      setVideos([]);
+   133→      showToast("Failed to load videos", "error");
+   134→    }
+   135→  }, [showToast]);
+   136→
+   137→  const fetchSettings = useCallback(async () => {
+   138→    try {
+   139→      const res = await fetch("/api/settings");
+   140→      if (!res.ok) throw new Error("Failed to fetch");
+   141→      const data = await res.json();
+   142→      if (data && typeof data === "object" && !Array.isArray(data)) {
+   143→        setSettings(data);
+   144→      } else {
+   145→        setSettings({});
+   146→      }
+   147→    } catch {
+   148→      setSettings({});
+   149→    }
+   150→  }, []);
+   151→
+   152→  useEffect(() => {
+   153→    Promise.all([fetchBlogPosts(), fetchVideos(), fetchSettings()]).finally(() =>
+   154→      setLoading(false)
+   155→    );
+   156→  }, [fetchBlogPosts, fetchVideos, fetchSettings]);
+   157→
+   158→  // ─── Blog CRUD ────────────────────────────────────────────────────────
+   159→
+   160→  const saveBlogPost = async () => {
+   161→    if (!editingBlog?.title) {
+   162→      showToast("Title is required", "error");
+   163→      return;
+   164→    }
+   165→    setSaving(true);
+   166→    try {
+   167→      if (isNewBlog) {
+   168→        const res = await fetch("/api/blog-create", {
+   169→          method: "POST",
+   170→          headers: { "Content-Type": "application/json" },
+   171→          body: JSON.stringify(editingBlog),
+   172→        });
+   173→        if (!res.ok) throw new Error("Failed to create");
+   174→        const newPost = await res.json();
+   175→        setBlogPosts((prev) => [newPost, ...prev]);
+   176→        showToast("Blog post created! සටහන සාදන ලදි!");
+   177→      } else {
+   178→        const res = await fetch(`/api/blog/${editingBlog.id}`, {
+   179→          method: "PUT",
+   180→          headers: { "Content-Type": "application/json" },
+   181→          body: JSON.stringify(editingBlog),
+   182→        });
+   183→        if (!res.ok) throw new Error("Failed to update");
+   184→        const updated = await res.json();
+   185→        setBlogPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+   186→        showToast("Blog post updated! සටහන යාවත්කාලීන කරන ලදි!");
+   187→      }
+   188→      setView("blog");
+   189→      setEditingBlog(null);
+   190→    } catch {
+   191→      showToast("Failed to save blog post", "error");
+   192→    } finally {
+   193→      setSaving(false);
+   194→    }
+   195→  };
+   196→
+   197→  const deleteBlogPost = async (id: string) => {
+   198→    try {
+   199→      await fetch(`/api/blog/${id}`, { method: "DELETE" });
+   200→      setBlogPosts((prev) => prev.filter((p) => p.id !== id));
+   201→      showToast("Blog post deleted");
+   202→    } catch {
+   203→      showToast("Failed to delete", "error");
+   204→    }
+   205→    setDeleteTarget(null);
+   206→  };
+   207→
+   208→  const toggleBlogPublish = async (post: BlogPost) => {
+   209→    try {
+   210→      const res = await fetch(`/api/blog/${post.id}`, {
+   211→        method: "PUT",
+   212→        headers: { "Content-Type": "application/json" },
+   213→        body: JSON.stringify({ published: !post.published }),
+   214→      });
+   215→      const updated = await res.json();
+   216→      setBlogPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+   217→      showToast(updated.published ? "Published!" : "Unpublished");
+   218→    } catch {
+   219→      showToast("Failed to toggle publish", "error");
+   220→    }
+   221→  };
+   222→
+   223→  // ─── Video CRUD ───────────────────────────────────────────────────────
+   224→
+   225→  const saveVideo = async () => {
+   226→    if (!editingVideo?.title || !editingVideo?.youtubeId) {
+   227→      showToast("Title and YouTube ID are required", "error");
+   228→      return;
+   229→    }
+   230→    setSaving(true);
+   231→    try {
+   232→      if (isNewVideo) {
+   233→        const res = await fetch("/api/video-create", {
+   234→          method: "POST",
+   235→          headers: { "Content-Type": "application/json" },
+   236→          body: JSON.stringify(editingVideo),
+   237→        });
+   238→        if (!res.ok) throw new Error("Failed to create");
+   239→        const newVideo = await res.json();
+   240→        setVideos((prev) => [newVideo, ...prev]);
+   241→        showToast("Video added! වීඩියෝ එක එකතු කරන ලදි!");
+   242→      } else {
+   243→        const res = await fetch(`/api/videos/${editingVideo.id}`, {
+   244→          method: "PUT",
+   245→          headers: { "Content-Type": "application/json" },
+   246→          body: JSON.stringify(editingVideo),
+   247→        });
+   248→        if (!res.ok) throw new Error("Failed to update");
+   249→        const updated = await res.json();
+   250→        setVideos((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
+   251→        showToast("Video updated! වීඩියෝව යාවත්කාලීන කරන ලදි!");
+   252→      }
+   253→      setView("videos");
+   254→      setEditingVideo(null);
+   255→    } catch {
+   256→      showToast("Failed to save video", "error");
+   257→    } finally {
+   258→      setSaving(false);
+   259→    }
+   260→  };
+   261→
+   262→  const deleteVideo = async (id: string) => {
+   263→    try {
+   264→      await fetch(`/api/videos/${id}`, { method: "DELETE" });
+   265→      setVideos((prev) => prev.filter((v) => v.id !== id));
+   266→      showToast("Video deleted");
+   267→    } catch {
+   268→      showToast("Failed to delete", "error");
+   269→    }
+   270→    setDeleteTarget(null);
+   271→  };
+   272→
+   273→  const toggleVideoPublish = async (video: VideoItem) => {
+   274→    try {
+   275→      const res = await fetch(`/api/videos/${video.id}`, {
+   276→        method: "PUT",
+   277→        headers: { "Content-Type": "application/json" },
+   278→        body: JSON.stringify({ published: !video.published }),
+   279→      });
+   280→      const updated = await res.json();
+   281→      setVideos((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
+   282→      showToast(updated.published ? "Published!" : "Unpublished");
+   283→    } catch {
+   284→      showToast("Failed to toggle publish", "error");
+   285→    }
+   286→  };
+   287→
+   288→  // ─── Settings ─────────────────────────────────────────────────────────
+   289→
+   290→  const saveSetting = async (key: string, value: string) => {
+   291→    try {
+   292→      await fetch("/api/settings-save", {
+   293→        method: "POST",
+   294→        headers: { "Content-Type": "application/json" },
+   295→        body: JSON.stringify({ key, value }),
+   296→      });
+   297→      setSettings((prev) => ({ ...prev, [key]: value }));
+   298→      showToast("Setting saved! සැකසුම සුරැකිණි!");
+   299→    } catch {
+   300→      showToast("Failed to save setting", "error");
+   301→    }
+   302→  };
+   303→
+   304→  const handleLogoUpload = async (file: File) => {
+   305→    const formData = new FormData();
+   306→    formData.append("file", file);
+   307→    try {
+   308→      const res = await fetch("/api/upload", {
+   309→        method: "POST",
+   310→        body: formData,
+   311→      });
+   312→      if (!res.ok) throw new Error("Upload failed");
+   313→      const data = await res.json();
+   314→      await saveSetting("logoUrl", data.url);
+   315→    } catch {
+   316→      showToast("Failed to upload logo", "error");
+   317→    }
+   318→  };
+   319→
+   320→  // ─── Format date ─────────────────────────────────────────────────────
+   321→
+   322→  const formatDate = (dateStr: string) => {
+   323→    return new Date(dateStr).toLocaleDateString("en-US", {
+   324→      year: "numeric",
+   325→      month: "short",
+   326→      day: "numeric",
+   327→    });
+   328→  };
+   329→
+   330→  // ─── Navigation items ────────────────────────────────────────────────
+   331→
+   332→  const navItems = [
+   333→    { key: "dashboard" as PanelView, label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
+   334→    { key: "blog" as PanelView, label: "Blog Posts", icon: <FileText className="w-4 h-4" /> },
+   335→    { key: "videos" as PanelView, label: "Videos", icon: <Video className="w-4 h-4" /> },
+   336→    { key: "settings" as PanelView, label: "Settings", icon: <Settings className="w-4 h-4" /> },
+   337→  ];
+   338→
+   339→  // ─── Render ──────────────────────────────────────────────────────────
+   340→
+   341→  return (
+   342→    <div className="min-h-screen bg-background flex font-sinhala">
+   343→      {/* Sidebar */}
+   344→      <aside className="w-64 border-r border-border bg-muted/20 p-4 flex flex-col shrink-0 hidden md:flex">
+   345→        <div className="flex items-center gap-2 mb-8 px-2">
+   346→          <Flower2 className="w-6 h-6 text-saffron" />
+   347→          <div>
+   348→            <h1 className="font-fraunces text-lg font-bold text-warm-dark">
+   349→              Pansil <span className="text-saffron italic">Maluwa</span>
+   350→            </h1>
+   351→            <p className="text-xs text-warm-light font-manrope">Control Panel</p>
+   352→          </div>
+   353→        </div>
+   354→
+   355→        <nav className="flex-1 space-y-1">
+   356→          {navItems.map((item) => (
+   357→            <button
+   358→              key={item.key}
+   359→              onClick={() => setView(item.key)}
+   360→              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-manrope transition-colors ${
+   361→                view === item.key || (item.key === "blog" && view === "blog-edit") || (item.key === "videos" && view === "video-edit")
+   362→                  ? "bg-saffron/10 text-saffron font-medium"
+   363→                  : "text-warm hover:bg-muted/50 hover:text-warm-dark"
+   364→              }`}
+   365→            >
+   366→              {item.icon}
+   367→              {item.label}
+   368→            </button>
+   369→          ))}
+   370→        </nav>
+   371→
+   372→        <div className="border-t border-border pt-4 mt-4">
+   373→          <a
+   374→            href="/"
+   375→            className="flex items-center gap-2 text-sm text-warm hover:text-saffron transition-colors font-manrope px-3"
+   376→          >
+   377→            <ArrowLeft className="w-4 h-4" />
+   378→            Back to Website
+   379→          </a>
+   380→        </div>
+   381→      </aside>
+   382→
+   383→      {/* Mobile header */}
+   384→      <div className="md:hidden fixed top-0 left-0 right-0 z-50 glass-3 border-b border-border">
+   385→        <div className="flex items-center justify-between px-4 py-3">
+   386→          <div className="flex items-center gap-2">
+   387→            <Flower2 className="w-5 h-5 text-saffron" />
+   388→            <span className="font-fraunces text-sm font-bold text-warm-dark">CPanel</span>
+   389→          </div>
+   390→          <div className="flex gap-1">
+   391→            {navItems.map((item) => (
+   392→              <button
+   393→                key={item.key}
+   394→                onClick={() => setView(item.key)}
+   395→                className={`p-2 rounded-lg transition-colors ${
+   396→                  view === item.key ? "bg-saffron/10 text-saffron" : "text-warm"
+   397→                }`}
+   398→              >
+   399→                {item.icon}
+   400→              </button>
+   401→            ))}
+   402→          </div>
+   403→        </div>
+   404→      </div>
+   405→
+   406→      {/* Main content */}
+   407→      <main className="flex-1 overflow-y-auto custom-scrollbar md:pt-0 pt-14">
+   408→        <div className="max-w-5xl mx-auto p-4 md:p-8">
+   409→          <AnimatePresence mode="wait">
+   410→            <motion.div
+   411→              key={view}
+   412→              initial={{ opacity: 0, y: 10 }}
+   413→              animate={{ opacity: 1, y: 0 }}
+   414→              exit={{ opacity: 0, y: -10 }}
+   415→              transition={{ duration: 0.2 }}
+   416→            >
+   417→              {/* ─── Dashboard ────────────────────────────────────── */}
+   418→              {view === "dashboard" && (
+   419→                <div>
+   420→                  <h2 className="font-fraunces text-2xl md:text-3xl font-bold text-warm-dark mb-6">
+   421→                    Dashboard
+   422→                  </h2>
+   423→                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+   424→                    <div className="glass-2 rounded-2xl p-6">
+   425→                      <div className="flex items-center gap-3 mb-2">
+   426→                        <div className="w-10 h-10 rounded-lg bg-saffron/10 flex items-center justify-center text-saffron">
+   427→                          <FileText className="w-5 h-5" />
+   428→                        </div>
+   429→                        <div>
+   430→                          <p className="font-ibm-mono text-2xl font-bold text-warm-dark">
+   431→                            {blogPosts.length}
+   432→                          </p>
+   433→                          <p className="text-xs text-warm font-manrope">Blog Posts</p>
+   434→                        </div>
+   435→                      </div>
+   436→                      <p className="text-xs text-warm-light font-ibm-mono mt-2">
+   437→                        {blogPosts.filter((p) => p.published).length} published
+   438→                      </p>
+   439→                    </div>
+   440→                    <div className="glass-2 rounded-2xl p-6">
+   441→                      <div className="flex items-center gap-3 mb-2">
+   442→                        <div className="w-10 h-10 rounded-lg bg-saffron/10 flex items-center justify-center text-saffron">
+   443→                          <Video className="w-5 h-5" />
+   444→                        </div>
+   445→                        <div>
+   446→                          <p className="font-ibm-mono text-2xl font-bold text-warm-dark">
+   447→                            {videos.length}
+   448→                          </p>
+   449→                          <p className="text-xs text-warm font-manrope">Videos</p>
+   450→                        </div>
+   451→                      </div>
+   452→                      <p className="text-xs text-warm-light font-ibm-mono mt-2">
+   453→                        {videos.filter((v) => v.published).length} published
+   454→                      </p>
+   455→                    </div>
+   456→                    <div className="glass-2 rounded-2xl p-6">
+   457→                      <div className="flex items-center gap-3 mb-2">
+   458→                        <div className="w-10 h-10 rounded-lg bg-saffron/10 flex items-center justify-center text-saffron">
+   459→                          <Eye className="w-5 h-5" />
+   460→                        </div>
+   461→                        <div>
+   462→                          <p className="font-ibm-mono text-2xl font-bold text-warm-dark">
+   463→                            {blogPosts.filter((p) => p.published).length + videos.filter((v) => v.published).length}
+   464→                          </p>
+   465→                          <p className="text-xs text-warm font-manrope">Published</p>
+   466→                        </div>
+   467→                      </div>
+   468→                      <p className="text-xs text-warm-light font-ibm-mono mt-2">total content</p>
+   469→                    </div>
+   470→                  </div>
+   471→
+   472→                  {/* Recent activity */}
+   473→                  <h3 className="font-fraunces text-lg font-semibold text-warm-dark mb-4">
+   474→                    Recent Activity
+   475→                  </h3>
+   476→                  <div className="space-y-2">
+   477→                    {[...blogPosts.slice(0, 3).map((p) => ({ type: "blog" as const, title: p.title, date: p.updatedAt, published: p.published })),
+   478→                      ...videos.slice(0, 3).map((v) => ({ type: "video" as const, title: v.title, date: v.updatedAt, published: v.published })),
+   479→                    ]
+   480→                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+   481→                      .slice(0, 5)
+   482→                      .map((item, i) => (
+   483→                        <div key={i} className="flex items-center justify-between glass-1 rounded-xl p-3">
+   484→                          <div className="flex items-center gap-3">
+   485→                            <div className={`w-2 h-2 rounded-full ${item.published ? "bg-emerald-500" : "bg-warm-light"}`} />
+   486→                            <span className="font-manrope text-sm text-warm-dark truncate max-w-[200px] md:max-w-[400px]">
+   487→                              {item.title}
+   488→                            </span>
+   489→                          </div>
+   490→                          <div className="flex items-center gap-2 shrink-0">
+   491→                            <Badge variant="outline" className="text-xs font-ibm-mono">
+   492→                              {item.type}
+   493→                            </Badge>
+   494→                            <span className="text-xs text-warm-light font-ibm-mono">
+   495→                              {formatDate(item.date)}
+   496→                            </span>
+   497→                          </div>
+   498→                        </div>
+   499→                      ))}
+   500→                  </div>
+   501→                </div>
+   502→              )}
+   503→
+   504→              {/* ─── Blog List ────────────────────────────────────── */}
+   505→              {view === "blog" && (
+   506→                <div>
+   507→                  <div className="flex items-center justify-between mb-6">
+   508→                    <h2 className="font-fraunces text-2xl md:text-3xl font-bold text-warm-dark">
+   509→                      Blog Posts
+   510→                    </h2>
+   511→                    <Button
+   512→                      onClick={() => {
+   513→                        setIsNewBlog(true);
+   514→                        setEditingBlog({ title: "", excerpt: "", content: "", category: "Dharma", published: false });
+   515→                        setView("blog-edit");
+   516→                      }}
+   517→                      className="bg-saffron hover:bg-saffron-dark text-white font-manrope"
+   518→                    >
+   519→                      <Plus className="w-4 h-4 mr-1" />
+   520→                      New Post
+   521→                    </Button>
+   522→                  </div>
+   523→
+   524→                  {blogPosts.length === 0 ? (
+   525→                    <div className="text-center py-16 glass-1 rounded-2xl">
+   526→                      <FileText className="w-12 h-12 text-warm-light mx-auto mb-4" />
+   527→                      <p className="font-manrope text-warm">No blog posts yet. Create your first one!</p>
+   528→                    </div>
+   529→                  ) : (
+   530→                    <div className="space-y-3">
+   531→                      {blogPosts.map((post) => (
+   532→                        <div
+   533→                          key={post.id}
+   534→                          className="glass-1 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3"
+   535→                        >
+   536→                          <div className="flex-1 min-w-0">
+   537→                            <div className="flex items-center gap-2 mb-1">
+   538→                              <div className={`w-2 h-2 rounded-full shrink-0 ${post.published ? "bg-emerald-500" : "bg-warm-light"}`} />
+   539→                              <h3 className="font-manrope font-semibold text-warm-dark truncate">
+   540→                                {post.title}
+   541→                              </h3>
+   542→                            </div>
+   543→                            <div className="flex items-center gap-2 text-xs text-warm-light">
+   544→                              <Badge variant="secondary" className="text-xs font-ibm-mono">
+   545→                                {post.category}
+   546→                              </Badge>
+   547→                              <span className="font-ibm-mono">{formatDate(post.updatedAt)}</span>
+   548→                            </div>
+   549→                          </div>
+   550→                          <div className="flex items-center gap-2 shrink-0">
+   551→                            <Button
+   552→                              variant="ghost"
+   553→                              size="sm"
+   554→                              onClick={() => toggleBlogPublish(post)}
+   555→                              className={post.published ? "text-emerald-600" : "text-warm-light"}
+   556→                            >
+   557→                              {post.published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+   558→                            </Button>
+   559→                            <Button
+   560→                              variant="ghost"
+   561→                              size="sm"
+   562→                              onClick={() => {
+   563→                                setIsNewBlog(false);
+   564→                                setEditingBlog({ ...post });
+   565→                                setView("blog-edit");
+   566→                              }}
+   567→                              className="text-saffron"
+   568→                            >
+   569→                              <Pencil className="w-4 h-4" />
+   570→                            </Button>
+   571→                            <Button
+   572→                              variant="ghost"
+   573→                              size="sm"
+   574→                              onClick={() => setDeleteTarget({ type: "blog", id: post.id, title: post.title })}
+   575→                              className="text-destructive"
+   576→                            >
+   577→                              <Trash2 className="w-4 h-4" />
+   578→                            </Button>
+   579→                          </div>
+   580→                        </div>
+   581→                      ))}
+   582→                    </div>
+   583→                  )}
+   584→                </div>
+   585→              )}
+   586→
+   587→              {/* ─── Blog Editor ──────────────────────────────────── */}
+   588→              {view === "blog-edit" && editingBlog && (
+   589→                <div>
+   590→                  <div className="flex items-center gap-3 mb-6">
+   591→                    <Button
+   592→                      variant="ghost"
+   593→                      size="sm"
+   594→                      onClick={() => { setView("blog"); setEditingBlog(null); }}
+   595→                      className="text-warm"
+   596→                    >
+   597→                      <ArrowLeft className="w-4 h-4 mr-1" />
+   598→                      Back
+   599→                    </Button>
+   600→                    <h2 className="font-fraunces text-xl md:text-2xl font-bold text-warm-dark">
+   601→                      {isNewBlog ? "New Blog Post" : "Edit Blog Post"}
+   602→                    </h2>
+   603→                  </div>
+   604→
+   605→                  <div className="space-y-5">
+   606→                    {/* Title */}
+   607→                    <div>
+   608→                      <Label className="font-manrope text-warm-dark mb-1.5 block">
+   609→                        Title <span className="text-warm-light text-xs">(ශීර්ෂය)</span>
+   610→                      </Label>
+   611→                      <Input
+   612→                        value={editingBlog.title || ""}
+   613→                        onChange={(e) => setEditingBlog({ ...editingBlog, title: e.target.value })}
+   614→                        placeholder="Enter title... ශීර්ෂය ඇතුළත් කරන්න..."
+   615→                        className="font-sinhala text-lg"
+   616→                        style={{ direction: "ltr", unicodeBidi: "plaintext" }}
+   617→                      />
+   618→                    </div>
+   619→
+   620→                    {/* Excerpt */}
+   621→                    <div>
+   622→                      <Label className="font-manrope text-warm-dark mb-1.5 block">
+   623→                        Excerpt <span className="text-warm-light text-xs">(සාරාංශය)</span>
+   624→                      </Label>
+   625→                      <Input
+   626→                        value={editingBlog.excerpt || ""}
+   627→                        onChange={(e) => setEditingBlog({ ...editingBlog, excerpt: e.target.value })}
+   628→                        placeholder="Brief description... කෙටි විස්තරය..."
+   629→                        className="font-sinhala"
+   630→                        style={{ direction: "ltr", unicodeBidi: "plaintext" }}
+   631→                      />
+   632→                    </div>
+   633→
+   634→                    {/* Category & Publish */}
+   635→                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   636→                      <div>
+   637→                        <Label className="font-manrope text-warm-dark mb-1.5 block">
+   638→                          Category <span className="text-warm-light text-xs">(වර්ගය)</span>
+   639→                        </Label>
+   640→                        <Select
+   641→                          value={editingBlog.category || "Dharma"}
+   642→                          onValueChange={(val) => setEditingBlog({ ...editingBlog, category: val })}
+   643→                        >
+   644→                          <SelectTrigger className="font-manrope">
+   645→                            <SelectValue />
+   646→                          </SelectTrigger>
+   647→                          <SelectContent>
+   648→                            {blogCategories.map((cat) => (
+   649→                              <SelectItem key={cat} value={cat} className="font-manrope">
+   650→                                {cat}
+   651→                              </SelectItem>
+   652→                            ))}
+   653→                          </SelectContent>
+   654→                        </Select>
+   655→                      </div>
+   656→                      <div>
+   657→                        <Label className="font-manrope text-warm-dark mb-1.5 block">
+   658→                          Published <span className="text-warm-light text-xs">(ප්‍රකාශනය)</span>
+   659→                        </Label>
+   660→                        <div className="flex items-center gap-3 h-10">
+   661→                          <Switch
+   662→                            checked={editingBlog.published || false}
+   663→                            onCheckedChange={(checked) =>
+   664→                              setEditingBlog({ ...editingBlog, published: checked })
+   665→                            }
+   666→                          />
+   667→                          <span className="font-manrope text-sm text-warm">
+   668→                            {editingBlog.published ? "Published" : "Draft"}
+   669→                          </span>
+   670→                        </div>
+   671→                      </div>
+   672→                    </div>
+   673→
+   674→                    {/* Image URL */}
+   675→                    <div>
+   676→                      <Label className="font-manrope text-warm-dark mb-1.5 block">
+   677→                        Image URL <span className="text-warm-light text-xs">(රූප URL)</span>
+   678→                      </Label>
+   679→                      <Input
+   680→                        value={editingBlog.imageUrl || ""}
+   681→                        onChange={(e) => setEditingBlog({ ...editingBlog, imageUrl: e.target.value })}
+   682→                        placeholder="https://..."
+   683→                        className="font-manrope"
+   684→                      />
+   685→                    </div>
+   686→
+   687→                    {/* Markdown Editor */}
+   688→                    <div>
+   689→                      <Label className="font-manrope text-warm-dark mb-1.5 block">
+   690→                        Content — Markdown <span className="text-warm-light text-xs">(අන්තර්ගතය — මාක්ඩවුන්)</span>
+   691→                      </Label>
+   692→                      <MarkdownEditor
+   693→                        value={editingBlog.content || ""}
+   694→                        onChange={(val) => setEditingBlog({ ...editingBlog, content: val })}
+   695→                        placeholder="Write your blog post content in Markdown... ඔබේ බ්ලොග් සටහන මාක්ඩවුන් හි ලියන්න..."
+   696→                      />
+   697→                    </div>
+   698→
+   699→                    {/* Save button */}
+   700→                    <div className="flex justify-end gap-3 pt-4">
+   701→                      <Button
+   702→                        variant="outline"
+   703→                        onClick={() => { setView("blog"); setEditingBlog(null); }}
+   704→                        className="font-manrope"
+   705→                      >
+   706→                        Cancel
+   707→                      </Button>
+   708→                      <Button
+   709→                        onClick={saveBlogPost}
+   710→                        disabled={saving}
+   711→                        className="bg-saffron hover:bg-saffron-dark text-white font-manrope"
+   712→                      >
+   713→                        {saving ? (
+   714→                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+   715→                        ) : (
+   716→                          <Save className="w-4 h-4 mr-2" />
+   717→                        )}
+   718→                        {isNewBlog ? "Create Post" : "Save Changes"}
+   719→                      </Button>
+   720→                    </div>
+   721→                  </div>
+   722→                </div>
+   723→              )}
+   724→
+   725→              {/* ─── Videos List ──────────────────────────────────── */}
+   726→              {view === "videos" && (
+   727→                <div>
+   728→                  <div className="flex items-center justify-between mb-6">
+   729→                    <h2 className="font-fraunces text-2xl md:text-3xl font-bold text-warm-dark">
+   730→                      Videos
+   731→                    </h2>
+   732→                    <Button
+   733→                      onClick={() => {
+   734→                        setIsNewVideo(true);
+   735→                        setEditingVideo({ title: "", youtubeId: "", category: "Sermon", published: true });
+   736→                        setView("video-edit");
+   737→                      }}
+   738→                      className="bg-saffron hover:bg-saffron-dark text-white font-manrope"
+   739→                    >
+   740→                      <Plus className="w-4 h-4 mr-1" />
+   741→                      Add Video
+   742→                    </Button>
+   743→                  </div>
+   744→
+   745→                  {videos.length === 0 ? (
+   746→                    <div className="text-center py-16 glass-1 rounded-2xl">
+   747→                      <Video className="w-12 h-12 text-warm-light mx-auto mb-4" />
+   748→                      <p className="font-manrope text-warm">No videos yet. Add your first one!</p>
+   749→                    </div>
+   750→                  ) : (
+   751→                    <div className="space-y-3">
+   752→                      {videos.map((video) => (
+   753→                        <div
+   754→                          key={video.id}
+   755→                          className="glass-1 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3"
+   756→                        >
+   757→                          {/* Thumbnail */}
+   758→                          <div className="w-28 h-16 rounded-lg overflow-hidden shrink-0 bg-muted">
+   759→                            <img
+   760→                              src={`https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`}
+   761→                              alt={video.title}
+   762→                              className="w-full h-full object-cover"
+   763→                            />
+   764→                          </div>
+   765→
+   766→                          <div className="flex-1 min-w-0">
+   767→                            <div className="flex items-center gap-2 mb-1">
+   768→                              <div className={`w-2 h-2 rounded-full shrink-0 ${video.published ? "bg-emerald-500" : "bg-warm-light"}`} />
+   769→                              <h3 className="font-manrope font-semibold text-warm-dark truncate">
+   770→                                {video.title}
+   771→                              </h3>
+   772→                            </div>
+   773→                            <div className="flex items-center gap-2 text-xs text-warm-light">
+   774→                              <Badge variant="secondary" className="text-xs font-ibm-mono">
+   775→                                {video.category}
+   776→                              </Badge>
+   777→                              <span className="font-ibm-mono">ID: {video.youtubeId}</span>
+   778→                            </div>
+   779→                          </div>
+   780→                          <div className="flex items-center gap-2 shrink-0">
+   781→                            <Button
+   782→                              variant="ghost"
+   783→                              size="sm"
+   784→                              onClick={() => toggleVideoPublish(video)}
+   785→                              className={video.published ? "text-emerald-600" : "text-warm-light"}
+   786→                            >
+   787→                              {video.published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+   788→                            </Button>
+   789→                            <Button
+   790→                              variant="ghost"
+   791→                              size="sm"
+   792→                              onClick={() => {
+   793→                                setIsNewVideo(false);
+   794→                                setEditingVideo({ ...video });
+   795→                                setView("video-edit");
+   796→                              }}
+   797→                              className="text-saffron"
+   798→                            >
+   799→                              <Pencil className="w-4 h-4" />
+   800→                            </Button>
+   801→                            <Button
+   802→                              variant="ghost"
+   803→                              size="sm"
+   804→                              onClick={() => setDeleteTarget({ type: "video", id: video.id, title: video.title })}
+   805→                              className="text-destructive"
+   806→                            >
+   807→                              <Trash2 className="w-4 h-4" />
+   808→                            </Button>
+   809→                          </div>
+   810→                        </div>
+   811→                      ))}
+   812→                    </div>
+   813→                  )}
+   814→                </div>
+   815→              )}
+   816→
+   817→              {/* ─── Video Editor ─────────────────────────────────── */}
+   818→              {view === "video-edit" && editingVideo && (
+   819→                <div>
+   820→                  <div className="flex items-center gap-3 mb-6">
+   821→                    <Button
+   822→                      variant="ghost"
+   823→                      size="sm"
+   824→                      onClick={() => { setView("videos"); setEditingVideo(null); }}
+   825→                      className="text-warm"
+   826→                    >
+   827→                      <ArrowLeft className="w-4 h-4 mr-1" />
+   828→                      Back
+   829→                    </Button>
+   830→                    <h2 className="font-fraunces text-xl md:text-2xl font-bold text-warm-dark">
+   831→                      {isNewVideo ? "Add Video" : "Edit Video"}
+   832→                    </h2>
+   833→                  </div>
+   834→
+   835→                  <div className="space-y-5">
+   836→                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   837→                      {/* Title */}
+   838→                      <div className="sm:col-span-2">
+   839→                        <Label className="font-manrope text-warm-dark mb-1.5 block">
+   840→                          Title <span className="text-warm-light text-xs">(ශීර්ෂය)</span>
+   841→                        </Label>
+   842→                        <Input
+   843→                          value={editingVideo.title || ""}
+   844→                          onChange={(e) => setEditingVideo({ ...editingVideo, title: e.target.value })}
+   845→                          placeholder="Video title... වීඩියෝ ශීර්ෂය..."
+   846→                          className="font-sinhala"
+   847→                          style={{ direction: "ltr", unicodeBidi: "plaintext" }}
+   848→                        />
+   849→                      </div>
+   850→
+   851→                      {/* YouTube ID */}
+   852→                      <div>
+   853→                        <Label className="font-manrope text-warm-dark mb-1.5 block">
+   854→                          YouTube Video ID <span className="text-warm-light text-xs">(වීඩියෝ ID)</span>
+   855→                        </Label>
+   856→                        <Input
+   857→                          value={editingVideo.youtubeId || ""}
+   858→                          onChange={(e) => setEditingVideo({ ...editingVideo, youtubeId: e.target.value })}
+   859→                          placeholder="e.g. dQw4w9WgXcQ"
+   860→                          className="font-ibm-mono text-sm"
+   861→                        />
+   862→                        <p className="text-xs text-warm-light mt-1 font-manrope">
+   863→                          The ID from youtube.com/watch?v=<strong>ID_HERE</strong>
+   864→                        </p>
+   865→                      </div>
+   866→
+   867→                      {/* Category */}
+   868→                      <div>
+   869→                        <Label className="font-manrope text-warm-dark mb-1.5 block">
+   870→                          Category <span className="text-warm-light text-xs">(වර්ගය)</span>
+   871→                        </Label>
+   872→                        <Select
+   873→                          value={editingVideo.category || "Sermon"}
+   874→                          onValueChange={(val) => setEditingVideo({ ...editingVideo, category: val })}
+   875→                        >
+   876→                          <SelectTrigger className="font-manrope">
+   877→                            <SelectValue />
+   878→                          </SelectTrigger>
+   879→                          <SelectContent>
+   880→                            {videoCategories.map((cat) => (
+   881→                              <SelectItem key={cat} value={cat} className="font-manrope">
+   882→                                {cat}
+   883→                              </SelectItem>
+   884→                            ))}
+   885→                          </SelectContent>
+   886→                        </Select>
+   887→                      </div>
+   888→
+   889→                      {/* Description */}
+   890→                      <div className="sm:col-span-2">
+   891→                        <Label className="font-manrope text-warm-dark mb-1.5 block">
+   892→                          Description <span className="text-warm-light text-xs">(විස්තරය)</span>
+   893→                        </Label>
+   894→                        <textarea
+   895→                          value={editingVideo.description || ""}
+   896→                          onChange={(e) => setEditingVideo({ ...editingVideo, description: e.target.value })}
+   897→                          placeholder="Video description... වීඩියෝ විස්තරය..."
+   898→                          className="font-sinhala w-full min-h-[100px] p-3 border border-border rounded-lg bg-transparent text-sm resize-none focus:outline-none focus:ring-2 focus:ring-saffron/30"
+   899→                          style={{ direction: "ltr", unicodeBidi: "plaintext" }}
+   900→                        />
+   901→                      </div>
+   902→
+   903→                      {/* Published */}
+   904→                      <div>
+   905→                        <Label className="font-manrope text-warm-dark mb-1.5 block">
+   906→                          Published <span className="text-warm-light text-xs">(ප්‍රකාශනය)</span>
+   907→                        </Label>
+   908→                        <div className="flex items-center gap-3 h-10">
+   909→                          <Switch
+   910→                            checked={editingVideo.published ?? true}
+   911→                            onCheckedChange={(checked) =>
+   912→                              setEditingVideo({ ...editingVideo, published: checked })
+   913→                            }
+   914→                          />
+   915→                          <span className="font-manrope text-sm text-warm">
+   916→                            {editingVideo.published ? "Published" : "Draft"}
+   917→                          </span>
+   918→                        </div>
+   919→                      </div>
+   920→                    </div>
+   921→
+   922→                    {/* YouTube Preview */}
+   923→                    {editingVideo.youtubeId && (
+   924→                      <div>
+   925→                        <Label className="font-manrope text-warm-dark mb-1.5 block">
+   926→                          Preview
+   927→                        </Label>
+   928→                        <div className="aspect-video rounded-xl overflow-hidden bg-black">
+   929→                          <iframe
+   930→                            src={`https://www.youtube.com/embed/${editingVideo.youtubeId}?rel=0`}
+   931→                            title="Video preview"
+   932→                            className="w-full h-full"
+   933→                            allowFullScreen
+   934→                          />
+   935→                        </div>
+   936→                      </div>
+   937→                    )}
+   938→
+   939→                    {/* Save */}
+   940→                    <div className="flex justify-end gap-3 pt-4">
+   941→                      <Button
+   942→                        variant="outline"
+   943→                        onClick={() => { setView("videos"); setEditingVideo(null); }}
+   944→                        className="font-manrope"
+   945→                      >
+   946→                        Cancel
+   947→                      </Button>
+   948→                      <Button
+   949→                        onClick={saveVideo}
+   950→                        disabled={saving}
+   951→                        className="bg-saffron hover:bg-saffron-dark text-white font-manrope"
+   952→                      >
+   953→                        {saving ? (
+   954→                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+   955→                        ) : (
+   956→                          <Save className="w-4 h-4 mr-2" />
+   957→                        )}
+   958→                        {isNewVideo ? "Add Video" : "Save Changes"}
+   959→                      </Button>
+   960→                    </div>
+   961→                  </div>
+   962→                </div>
+   963→              )}
+   964→
+   965→              {/* ─── Settings ─────────────────────────────────────── */}
+   966→              {view === "settings" && (
+   967→                <div>
+   968→                  <h2 className="font-fraunces text-2xl md:text-3xl font-bold text-warm-dark mb-6">
+   969→                    Settings <span className="text-warm-light text-lg font-manrope">(සැකසුම්)</span>
+   970→                  </h2>
+   971→
+   972→                  <div className="space-y-6">
+   973→                    {/* Logo */}
+   974→                    <div className="glass-2 rounded-2xl p-6">
+   975→                      <h3 className="font-fraunces text-lg font-semibold text-warm-dark mb-4">
+   976→                        Logo <span className="text-warm-light text-sm font-manrope">(ලෝගෝ)</span>
+   977→                      </h3>
+   978→                      <div className="flex flex-col sm:flex-row items-start gap-4">
+   979→                        <div className="w-24 h-24 rounded-xl bg-muted/50 border border-border flex items-center justify-center overflow-hidden shrink-0">
+   980→                          {settings.logoUrl ? (
+   981→                            <img
+   982→                              src={settings.logoUrl}
+   983→                              alt="Site logo"
+   984→                              className="w-full h-full object-contain p-2"
+   985→                            />
+   986→                          ) : (
+   987→                            <ImageIcon className="w-8 h-8 text-warm-light" />
+   988→                          )}
+   989→                        </div>
+   990→                        <div className="flex-1 space-y-3">
+   991→                          <div>
+   992→                            <Label className="font-manrope text-warm-dark mb-1.5 block">
+   993→                              Logo URL
+   994→                            </Label>
+   995→                            <div className="flex gap-2">
+   996→                              <Input
+   997→                                value={settings.logoUrl || ""}
+   998→                                onChange={(e) =>
+   999→                                  setSettings({ ...settings, logoUrl: e.target.value })
+  1000→                                }
+  1001→                                placeholder="https://..."
+  1002→                                className="font-manrope"
+  1003→                              />
+  1004→                              <Button
+  1005→                                onClick={() => saveSetting("logoUrl", settings.logoUrl || "")}
+  1006→                                className="bg-saffron hover:bg-saffron-dark text-white shrink-0"
+  1007→                              >
+  1008→                                <Save className="w-4 h-4" />
+  1009→                              </Button>
+  1010→                            </div>
+  1011→                          </div>
+  1012→                          <div>
+  1013→                            <Label className="font-manrope text-warm-dark mb-1.5 block">
+  1014→                              Upload Logo
+  1015→                            </Label>
+  1016→                            <Input
+  1017→                              type="file"
+  1018→                              accept="image/*"
+  1019→                              onChange={(e) => {
+  1020→                                const file = e.target.files?.[0];
+  1021→                                if (file) handleLogoUpload(file);
+  1022→                              }}
+  1023→                              className="font-manrope"
+  1024→                            />
+  1025→                          </div>
+  1026→                        </div>
+  1027→                      </div>
+  1028→                    </div>
+  1029→
+  1030→                    {/* Site Info */}
+  1031→                    <div className="glass-2 rounded-2xl p-6">
+  1032→                      <h3 className="font-fraunces text-lg font-semibold text-warm-dark mb-4">
+  1033→                        Site Information <span className="text-warm-light text-sm font-manrope">(අඩවි තොරතුරු)</span>
+  1034→                      </h3>
+  1035→                      <div className="space-y-4">
+  1036→                        <div>
+  1037→                          <Label className="font-manrope text-warm-dark mb-1.5 block">
+  1038→                            Site Name
+  1039→                          </Label>
+  1040→                          <div className="flex gap-2">
+  1041→                            <Input
+  1042→                              value={settings.siteName || ""}
+  1043→                              onChange={(e) =>
+  1044→                                setSettings({ ...settings, siteName: e.target.value })
+  1045→                              }
+  1046→                              placeholder="Pansil Maluwa"
+  1047→                              className="font-sinhala"
+  1048→                              style={{ direction: "ltr", unicodeBidi: "plaintext" }}
+  1049→                            />
+  1050→                            <Button
+  1051→                              onClick={() => saveSetting("siteName", settings.siteName || "")}
+  1052→                              className="bg-saffron hover:bg-saffron-dark text-white shrink-0"
+  1053→                            >
+  1054→                              <Save className="w-4 h-4" />
+  1055→                            </Button>
+  1056→                          </div>
+  1057→                        </div>
+  1058→                        <div>
+  1059→                          <Label className="font-manrope text-warm-dark mb-1.5 block">
+  1060→                            Site Description
+  1061→                          </Label>
+  1062→                          <div className="flex gap-2">
+  1063→                            <Input
+  1064→                              value={settings.siteDescription || ""}
+  1065→                              onChange={(e) =>
+  1066→                                setSettings({ ...settings, siteDescription: e.target.value })
+  1067→                              }
+  1068→                              placeholder="A sacred digital space for Buddhist teachings..."
+  1069→                              className="font-sinhala"
+  1070→                              style={{ direction: "ltr", unicodeBidi: "plaintext" }}
+  1071→                            />
+  1072→                            <Button
+  1073→                              onClick={() =>
+  1074→                                saveSetting("siteDescription", settings.siteDescription || "")
+  1075→                              }
+  1076→                              className="bg-saffron hover:bg-saffron-dark text-white shrink-0"
+  1077→                            >
+  1078→                              <Save className="w-4 h-4" />
+  1079→                            </Button>
+  1080→                          </div>
+  1081→                        </div>
+  1082→                      </div>
+  1083→                    </div>
+  1084→
+  1085→                    {/* Unicode info */}
+  1086→                    <div className="glass-1 rounded-2xl p-6">
+  1087→                      <h3 className="font-fraunces text-lg font-semibold text-warm-dark mb-3">
+  1088→                        Unicode & Language Support
+  1089→                      </h3>
+  1090→                      <div className="space-y-2 font-manrope text-sm text-warm">
+  1091→                        <p className="flex items-center gap-2">
+  1092→                          <Check className="w-4 h-4 text-emerald-500" />
+  1093→                          Full Sinhala (සිංහල) Unicode support in all text fields
+  1094→                        </p>
+  1095→                        <p className="flex items-center gap-2">
+  1096→                          <Check className="w-4 h-4 text-emerald-500" />
+  1097→                          Noto Sans Sinhala font for proper rendering
+  1098→                        </p>
+  1099→                        <p className="flex items-center gap-2">
+  1100→                          <Check className="w-4 h-4 text-emerald-500" />
+  1101→                          Markdown editor supports mixed-language content
+  1102→                        </p>
+  1103→                        <p className="flex items-center gap-2">
+  1104→                          <Check className="w-4 h-4 text-emerald-500" />
+  1105→                          RTL/LTR auto-detection with unicode-bidi
+  1106→                        </p>
+  1107→                      </div>
+  1108→                    </div>
+  1109→                  </div>
+  1110→                </div>
+  1111→              )}
+  1112→            </motion.div>
+  1113→          </AnimatePresence>
+  1114→        </div>
+  1115→      </main>
+  1116→
+  1117→      {/* Delete Confirmation Dialog */}
+  1118→      <AlertDialog
+  1119→        open={!!deleteTarget}
+  1120→        onOpenChange={() => setDeleteTarget(null)}
+  1121→      >
+  1122→        <AlertDialogContent className="glass-3">
+  1123→          <AlertDialogHeader>
+  1124→            <AlertDialogTitle className="font-fraunces text-warm-dark flex items-center gap-2">
+  1125→              <AlertTriangle className="w-5 h-5 text-destructive" />
+  1126→              Delete Confirmation
+  1127→            </AlertDialogTitle>
+  1128→            <AlertDialogDescription className="font-manrope text-warm">
+  1129→              Are you sure you want to delete &ldquo;{deleteTarget?.title}&rdquo;? This action cannot
+  1130→              be undone. මෙම ක්‍රියාව ආපසු හැරවිය නොහැක.
+  1131→            </AlertDialogDescription>
+  1132→          </AlertDialogHeader>
+  1133→          <AlertDialogFooter>
+  1134→            <AlertDialogCancel className="font-manrope">Cancel</AlertDialogCancel>
+  1135→            <AlertDialogAction
+  1136→              onClick={() => {
+  1137→                if (deleteTarget?.type === "blog") deleteBlogPost(deleteTarget.id);
+  1138→                else if (deleteTarget?.type === "video") deleteVideo(deleteTarget.id);
+  1139→              }}
+  1140→              className="bg-destructive text-white hover:bg-destructive/90 font-manrope"
+  1141→            >
+  1142→              Delete
+  1143→            </AlertDialogAction>
+  1144→          </AlertDialogFooter>
+  1145→        </AlertDialogContent>
+  1146→      </AlertDialog>
+  1147→
+  1148→      {/* Toast */}
+  1149→      <AnimatePresence>
+  1150→        {toast && (
+  1151→          <motion.div
+  1152→            initial={{ opacity: 0, y: 50, x: "-50%" }}
+  1153→            animate={{ opacity: 1, y: 0, x: "-50%" }}
+  1154→            exit={{ opacity: 0, y: 50, x: "-50%" }}
+  1155→            className={`fixed bottom-6 left-1/2 z-[100] px-5 py-3 rounded-xl shadow-lg font-manrope text-sm flex items-center gap-2 ${
+  1156→              toast.type === "success"
+  1157→                ? "bg-emerald-600 text-white"
+  1158→                : "bg-destructive text-white"
+  1159→            }`}
+  1160→          >
+  1161→            {toast.type === "success" ? (
+  1162→              <Check className="w-4 h-4" />
+  1163→            ) : (
+  1164→              <AlertTriangle className="w-4 h-4" />
+  1165→            )}
+  1166→            {toast.message}
+  1167→          </motion.div>
+  1168→        )}
+  1169→      </AnimatePresence>
+  1170→    </div>
+  1171→  );
+  1172→}
+  1173→
