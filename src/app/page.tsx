@@ -18,7 +18,24 @@ const pageVariants = {
 };
 
 export default function PansilMaluwa() {
-  const [activePage, setActivePage] = useState<PageKey>("home");
+  // On initial mount, check URL for ?blog= param and switch to blog page if present
+  const [activePage, setActivePage] = useState<PageKey>(() => {
+    if (typeof window === "undefined") return "home";
+    const params = new URLSearchParams(window.location.search);
+    return params.get("blog") ? "blog" : "home";
+  });
+
+  // Handle page changes - clear blog param when leaving blog page
+  const handlePageChange = (page: PageKey) => {
+    setActivePage(page);
+    if (page !== "blog") {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("blog")) {
+        url.searchParams.delete("blog");
+        window.history.pushState({}, "", url);
+      }
+    }
+  };
 
   const renderPage = () => {
     switch (activePage) {
@@ -46,7 +63,7 @@ export default function PansilMaluwa() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <button
-              onClick={() => setActivePage("home")}
+              onClick={() => handlePageChange("home")}
               className="flex items-center gap-2.5 group"
             >
               <div className="relative">
@@ -65,7 +82,7 @@ export default function PansilMaluwa() {
             <div className="flex items-center gap-3">
               <Navigation
                 activePage={activePage}
-                onPageChange={setActivePage}
+                onPageChange={handlePageChange}
               />
               <div className="hidden md:block">
                 <ThemeToggle />

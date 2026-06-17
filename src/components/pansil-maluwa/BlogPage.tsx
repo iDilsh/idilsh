@@ -82,6 +82,54 @@ export default function BlogPage() {
     fetchPosts();
   }, []);
 
+  // When posts are loaded, check URL for blog ID and open that article
+  useEffect(() => {
+    if (posts.length > 0 && !selectedPost) {
+      const params = new URLSearchParams(window.location.search);
+      const blogId = params.get("blog");
+      if (blogId) {
+        const post = posts.find((p) => p.id === blogId);
+        if (post) {
+          setSelectedPost(post);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }
+    }
+  }, [posts, selectedPost]);
+
+  // Listen for popstate events (browser back/forward buttons)
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const blogId = params.get("blog");
+      if (blogId) {
+        const post = posts.find((p) => p.id === blogId);
+        setSelectedPost(post || null);
+      } else {
+        setSelectedPost(null);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [posts]);
+
+  // Open an article and update the URL
+  const openArticle = (post: BlogPost) => {
+    setSelectedPost(post);
+    const url = new URL(window.location.href);
+    url.searchParams.set("blog", post.id);
+    window.history.pushState({}, "", url);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Close the article and remove the blog param from URL
+  const closeArticle = () => {
+    setSelectedPost(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("blog");
+    window.history.pushState({}, "", url);
+  };
+
   const categories = [
     "All",
     ...Array.from(new Set(posts.map((p) => p.category))),
@@ -129,7 +177,7 @@ export default function BlogPage() {
             >
               {/* Back button */}
               <button
-                onClick={() => setSelectedPost(null)}
+                onClick={closeArticle}
                 className="inline-flex items-center gap-2 font-sinhala text-sm text-warm hover:text-saffron transition-colors mb-8 group"
               >
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -193,7 +241,7 @@ export default function BlogPage() {
             {/* Bottom actions */}
             <div className="flex items-center justify-between mt-10">
               <button
-                onClick={() => setSelectedPost(null)}
+                onClick={closeArticle}
                 className="inline-flex items-center gap-2 font-sinhala text-sm text-warm hover:text-saffron transition-colors group"
               >
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -247,10 +295,7 @@ export default function BlogPage() {
                         key={post.id}
                         whileHover={{ y: -4, scale: 1.02 }}
                         transition={{ duration: 0.3 }}
-                        onClick={() => {
-                          setSelectedPost(post);
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
+                        onClick={() => openArticle(post)}
                         className={`rounded-2xl overflow-hidden cursor-pointer group ${
                           index === 0 ? "glass-1" : "glass-2"
                         }`}
@@ -377,7 +422,7 @@ export default function BlogPage() {
                   variants={staggerItem}
                   whileHover={{ y: -6, scale: 1.02 }}
                   transition={{ duration: 0.3 }}
-                  onClick={() => setSelectedPost(post)}
+                  onClick={() => openArticle(post)}
                   className={`rounded-2xl overflow-hidden cursor-pointer group ${
                     index % 3 === 0
                       ? "glass-1"

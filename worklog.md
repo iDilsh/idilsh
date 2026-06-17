@@ -144,3 +144,33 @@ Stage Summary:
 - All CSS variables for .dark class were already defined in globals.css - just needed ThemeProvider activation
 - Files modified: BlogPage.tsx, layout.tsx, page.tsx, Navigation.tsx
 - New file: ThemeToggle.tsx
+
+---
+Task ID: 6
+Agent: Main Agent
+Task: Fix article URL routing - open article should update URL, copy link should redirect to article
+
+Work Log:
+- Diagnosed root cause: BlogPage used client-side state (selectedPost) to switch views but never updated the URL
+- This caused: (1) URL stayed as "/" when opening articles, (2) copied link "?blog=ID" opened home page instead of article
+- Added useEffect to BlogPage that reads ?blog= param after posts load and opens the matching article
+- Added popstate event listener to handle browser back/forward buttons (close article when param removed)
+- Created openArticle() helper: sets selectedPost + pushState to /?blog=ID
+- Created closeArticle() helper: clears selectedPost + removes ?blog= param from URL
+- Replaced all 4 setSelectedPost() call sites in click handlers with openArticle()/closeArticle()
+- Updated page.tsx to read URL on initial mount (lazy useState initializer) and switch to blog page if ?blog= present
+- Added handlePageChange() in page.tsx that clears ?blog= param when navigating away from blog
+- Fixed lint error: used lazy useState initializer instead of useEffect+setState (avoids set-state-in-effect warning)
+- Verified end-to-end with Agent Browser:
+  - Opening article updates URL to /?blog=ARTICLE_ID ✅
+  - Copy Link button works + toast shows ✅
+  - Browser back button closes article and updates URL ✅
+  - Direct navigation to /?blog=ARTICLE_ID auto-opens the article ✅
+  - Clicking related post updates URL to new article ID ✅
+  - History stack works correctly (back returns to previous article) ✅
+
+Stage Summary:
+- Article URL routing now fully functional via pushState/popstate
+- URL changes when opening/closing articles, supports deep-linking and browser navigation
+- Copy Link now produces a working URL that opens the specific article when visited
+- Files modified: src/components/pansil-maluwa/BlogPage.tsx, src/app/page.tsx
