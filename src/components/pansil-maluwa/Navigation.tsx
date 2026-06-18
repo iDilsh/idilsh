@@ -16,7 +16,7 @@ interface NavigationProps {
 const navItems: { key: PageKey; label: string; icon: React.ReactNode }[] = [
   { key: "home", label: "Home", icon: <Home className="w-4 h-4" /> },
   { key: "about", label: "About Us", icon: <Info className="w-4 h-4" /> },
-  { key: "blog", label: "Blog", icon: <BookOpen className="w-4 h-4" /> },
+  { key: "blog", label: "සදහම් ලිපි", icon: <BookOpen className="w-4 h-4" /> },
   { key: "videos", label: "Videos", icon: <PlayCircle className="w-4 h-4" /> },
 ];
 
