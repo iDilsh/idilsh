@@ -43,7 +43,7 @@ export default function PansilMaluwa() {
         return <HomePage />;
       case "about":
         return <AboutPage />;
-      case "සදහම් ලිපි":
+      case "blog":
         return <BlogPage />;
       case "videos":
         return <VideosPage />;
