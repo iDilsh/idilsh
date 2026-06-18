@@ -13,10 +13,10 @@ interface NavigationProps {
   onPageChange: (page: PageKey) => void;
 }
 
-const navItems: { key: PageKey; label: string; icon: React.ReactNode }[] = [
+const navItems: { key: PageKey; label: string; icon: React.ReactNode; sinhala?: boolean }[] = [
   { key: "home", label: "Home", icon: <Home className="w-4 h-4" /> },
   { key: "about", label: "About Us", icon: <Info className="w-4 h-4" /> },
-  { key: "blog", label: "සදහම් ලිපි", icon: <BookOpen className="w-4 h-4" /> },
+  { key: "blog", label: "සදහම් ලිපි", icon: <BookOpen className="w-4 h-4" />, sinhala: true },
   { key: "videos", label: "Videos", icon: <PlayCircle className="w-4 h-4" /> },
 ];
 
@@ -40,7 +40,7 @@ export default function Navigation({
                 : "text-warm-dark/70"
             )}
           >
-            <span className="flex items-center gap-2">
+            <span className={`flex items-center gap-2 ${item.sinhala ? "font-sinhala" : ""}`}>
               {item.icon}
               {item.label}
             </span>
@@ -76,7 +76,7 @@ export default function Navigation({
               )}
             >
               {item.icon}
-              <span className="text-[10px] font-manrope tracking-wide">
+              <span className={`text-[10px] tracking-wide ${item.sinhala ? "font-sinhala" : "font-manrope"}`}>
                 {item.label}
               </span>
               {activePage === item.key && (

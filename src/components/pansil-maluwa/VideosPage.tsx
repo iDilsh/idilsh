@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PlayCircle, Tag, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +36,52 @@ const categoryColors: Record<string, string> = {
   History: "bg-amber-500/15 text-amber-700",
   Dharma: "bg-saffron/15 text-saffron-dark",
   Scripture: "bg-violet-500/15 text-violet-700",
+  Sermon: "bg-saffron/15 text-saffron-dark",
 };
+
+// Robust YouTube thumbnail with fallback chain: mqdefault → hqdefault → styled placeholder
+function VideoThumbnail({ youtubeId, title }: { youtubeId: string; title: string }) {
+  const [thumbSrc, setThumbSrc] = useState(
+    `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`
+  );
+  const [fallbackStage, setFallbackStage] = useState(0);
+
+  const handleError = () => {
+    if (fallbackStage === 0) {
+      // Try hqdefault next
+      setFallbackStage(1);
+      setThumbSrc(`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`);
+    } else if (fallbackStage === 1) {
+      // Try maxresdefault next
+      setFallbackStage(2);
+      setThumbSrc(`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`);
+    } else {
+      // All YouTube thumbnails failed - show styled placeholder
+      setFallbackStage(3);
+    }
+  };
+
+  if (fallbackStage === 3) {
+    // Styled gradient placeholder with play icon
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-saffron/30 via-warm/20 to-saffron-dark/30 flex items-center justify-center">
+        <div className="text-center px-4">
+          <PlayCircle className="w-12 h-12 text-white/80 mx-auto mb-2" />
+          <p className="font-sinhala text-xs text-white/90 line-clamp-2">{title}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={thumbSrc}
+      alt={title}
+      onError={handleError}
+      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+    />
+  );
+}
 
 export default function VideosPage() {
   const [videos, setVideos] = useState<Video[]>([]);
@@ -44,6 +89,7 @@ export default function VideosPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeVideo, setActiveVideo] = useState<Video | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>("All");
+  const featuredRef = useRef<HTMLDivElement>(null);
 
   const fetchVideos = async () => {
     setLoading(true);
@@ -77,6 +123,15 @@ export default function VideosPage() {
       ? videos
       : videos.filter((v) => v.category === activeFilter);
 
+  // Click a video card: switch featured player + scroll to top so user sees it
+  const handleVideoClick = (video: Video) => {
+    setActiveVideo(video);
+    // Scroll to featured player smoothly
+    setTimeout(() => {
+      featuredRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
@@ -109,14 +164,16 @@ export default function VideosPage() {
           {/* Featured Video Player */}
           {activeVideo && (
             <motion.div
+              ref={featuredRef}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="mb-12"
+              className="mb-12 scroll-mt-20"
             >
               <div className="glass-2 rounded-3xl overflow-hidden">
                 <div className="aspect-video relative">
                   <iframe
+                    key={activeVideo.youtubeId}
                     src={`https://www.youtube.com/embed/${activeVideo.youtubeId}?rel=0`}
                     title={activeVideo.title}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -211,7 +268,7 @@ export default function VideosPage() {
                     exit={{ opacity: 0, scale: 0.95 }}
                     whileHover={{ y: -4, scale: 1.02 }}
                     transition={{ duration: 0.3 }}
-                    onClick={() => setActiveVideo(video)}
+                    onClick={() => handleVideoClick(video)}
                     className={`rounded-2xl overflow-hidden cursor-pointer group ${
                       video.id === activeVideo?.id
                         ? "ring-2 ring-saffron/50"
@@ -224,13 +281,9 @@ export default function VideosPage() {
                         : "glass-3"
                     }`}
                   >
-                    {/* Thumbnail */}
+                    {/* Thumbnail with fallback */}
                     <div className="relative aspect-video overflow-hidden">
-                      <img
-                        src={`https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`}
-                        alt={video.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
+                      <VideoThumbnail youtubeId={video.youtubeId} title={video.title} />
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                         <PlayCircle className="w-12 h-12 text-white/80 group-hover:text-white group-hover:scale-110 transition-all duration-300" />
                       </div>

@@ -174,3 +174,54 @@ Stage Summary:
 - URL changes when opening/closing articles, supports deep-linking and browser navigation
 - Copy Link now produces a working URL that opens the specific article when visited
 - Files modified: src/components/pansil-maluwa/BlogPage.tsx, src/app/page.tsx
+
+---
+Task ID: 7
+Agent: Main Agent
+Task: Rename "Blog" nav button to "සදහම් ලිපි" (Sinhala)
+
+Work Log:
+- Updated navItems in Navigation.tsx: changed blog label from "Blog" to "සදහම් ලිපි"
+- Added optional `sinhala?: boolean` field to navItems type for per-item font control
+- Applied `font-sinhala` class conditionally to blog nav item spans (desktop + mobile)
+- This ensures proper rendering with Noto Sans Sinhala font (loaded in layout.tsx)
+- Verified with Agent Browser: both desktop top nav and mobile bottom nav show "සදහම් ලිපි"
+
+Stage Summary:
+- Blog nav button renamed to Sinhala "සදහම් ලිපි" in both desktop and mobile views
+- File modified: src/components/pansil-maluwa/Navigation.tsx
+
+---
+Task ID: 8
+Agent: Main Agent
+Task: Fix video thumbnails not showing + clicking not redirecting to YouTube video
+
+Work Log:
+- Root cause: Seed data used FAKE YouTube IDs (N0mS7JnW0UI, hudbOe3gN3E, etc.) that return 404 from img.youtube.com
+  - Verified by testing thumbnail URLs: 5 out of 6 IDs returned 404 for mqdefault.jpg
+  - Only sz7cpV7ERsM returned 200, but it was the 2nd video (not featured)
+- Searched web for REAL Buddhist YouTube videos and verified their thumbnail URLs return 200
+- Updated all 6 seed video entries with real YouTube IDs:
+  1. n_LLXINn89M - Buddha's First Teaching (Beginner)
+  2. XHvtIcaD194 - Calm-Ease | Thich Nhat Hanh (Meditation)
+  3. RcCgqwmkzsU - Buddha's Last Teachings - Jack Kornfield (History)
+  4. gCKBLbCbXMw - How To Be A Good Buddhist (Dharma)
+  5. HJVUT0o9y8s - 10-Min Guided Meditation Buddhist Monk (Meditation)
+  6. A__DcoIZoN4 - Dharma Talk - Awakening New Way (Scripture)
+- Created VideoThumbnail component with progressive fallback chain:
+  mqdefault.jpg → hqdefault.jpg → maxresdefault.jpg → styled gradient placeholder
+  (ensures broken thumbnails always show something nice instead of broken image icon)
+- Added handleVideoClick: switches featured player + smooth scrolls to top so user sees it play
+- Added key={activeVideo.youtubeId} to iframe to force fresh load when switching videos
+- Added featuredRef with scroll-mt-20 for proper scroll positioning
+- Updated existing local SQLite database with real YouTube IDs (ran UPDATE statements)
+- Updated scripts/setup-local.ts and scripts/setup-supabase.sql with real IDs
+- Added UPDATE statements to setup-supabase.sql so user can fix their production Supabase DB
+- Verified with Agent Browser: all 6 thumbnails load (200), clicking switches featured player + scrolls to top, zero console errors
+
+Stage Summary:
+- Root cause was fake YouTube IDs in seed data → replaced with real Buddhist video IDs
+- VideoThumbnail component adds robustness with fallback chain for any future broken IDs
+- Click behavior improved: switches featured player + smooth scroll to top
+- Files modified: VideosPage.tsx, scripts/setup-local.ts, scripts/setup-supabase.sql
+- For PRODUCTION (Supabase): user needs to run the UPDATE statements in setup-supabase.sql via Supabase SQL Editor to fix their live database

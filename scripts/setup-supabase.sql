@@ -109,12 +109,20 @@ Regular metta practice reduces anger and anxiety, increases empathy and compassi
 
 -- 6. Seed videos
 INSERT INTO "Video" (id, title, description, "youtubeId", category, published, "createdAt", "updatedAt") VALUES
-('cmq7gjq7c0006q77svw4k7e9l', 'Introduction to Buddhist Philosophy', 'A comprehensive introduction to the core teachings of the Buddha, perfect for beginners.', 'N0mS7JnW0UI', 'Beginner', 1, NOW(), NOW()),
-('cmq7gjq7c0007q77sfv8j2a4m', 'Guided Meditation for Inner Peace', 'A calming guided meditation session to help you find peace and clarity within.', 'sz7cpV7ERsM', 'Meditation', 1, NOW(), NOW()),
-('cmq7gjq7c0008q77s5q9h3b7n', 'The Life of the Buddha', 'Explore the remarkable journey of Siddhartha Gautama from prince to enlightened teacher.', 'hudbOe3gN3E', 'History', 1, NOW(), NOW()),
-('cmq7gjq7c0009q77sl4x6c8d2', 'Understanding the Five Precepts', 'A detailed explanation of the five precepts that form the ethical foundation of Buddhist practice.', '9G1CjQ2-NJA', 'Dharma', 1, NOW(), NOW()),
-('cmq7gjq7c0010q77sw7y9e5f3', 'Anapanasati: Breath Meditation', 'Learn the Buddha''s original method of breath meditation for developing concentration and insight.', 'steCSLzKbzg', 'Meditation', 1, NOW(), NOW()),
-('cmq7gjq7c0011q77sr2t4g6h8', 'Dhammapada: Verses of the Dhamma', 'An exploration of the most beloved Buddhist scripture and its practical wisdom for daily life.', 'tRJLPj9Y2zU', 'Scripture', 1, NOW(), NOW());
+('cmq7gjq7c0006q77svw4k7e9l', 'Buddha''s First Teaching: The Sermon That Shook The Cosmos', 'A comprehensive introduction to the core teachings of the Buddha, perfect for beginners.', 'n_LLXINn89M', 'Beginner', 1, NOW(), NOW()),
+('cmq7gjq7c0007q77sfv8j2a4m', 'Calm - Ease | Guided Meditation by Thich Nhat Hanh', 'A calming guided meditation session to help you find peace and clarity within.', 'XHvtIcaD194', 'Meditation', 1, NOW(), NOW()),
+('cmq7gjq7c0008q77s5q9h3b7n', 'The Buddha''s Last Teachings - Dharma Talk by Jack Kornfield', 'Explore the remarkable journey of Siddhartha Gautama from prince to enlightened teacher.', 'RcCgqwmkzsU', 'History', 1, NOW(), NOW()),
+('cmq7gjq7c0009q77sl4x6c8d2', 'How To Be A Good Buddhist | Dhamma Sermons', 'A detailed explanation of the five precepts that form the ethical foundation of Buddhist practice.', 'gCKBLbCbXMw', 'Dharma', 1, NOW(), NOW()),
+('cmq7gjq7c0010q77sw7y9e5f3', '10-Minute Guided Meditation for Beginners with a Buddhist Monk', 'Learn the Buddha''s original method of breath meditation for developing concentration and insight.', 'HJVUT0o9y8s', 'Meditation', 1, NOW(), NOW()),
+('cmq7gjq7c0011q77sr2t4g6h8', 'Dharma Talk - Awakening to a New Way of Being', 'An exploration of the most beloved Buddhist scripture and its practical wisdom for daily life.', 'A__DcoIZoN4', 'Scripture', 1, NOW(), NOW());
+
+-- 6b. Update existing videos with real YouTube IDs (run this if videos already exist)
+UPDATE "Video" SET "youtubeId" = 'n_LLXINn89M', title = 'Buddha''s First Teaching: The Sermon That Shook The Cosmos' WHERE id = 'cmq7gjq7c0006q77svw4k7e9l';
+UPDATE "Video" SET "youtubeId" = 'XHvtIcaD194', title = 'Calm - Ease | Guided Meditation by Thich Nhat Hanh' WHERE id = 'cmq7gjq7c0007q77sfv8j2a4m';
+UPDATE "Video" SET "youtubeId" = 'RcCgqwmkzsU', title = 'The Buddha''s Last Teachings - Dharma Talk by Jack Kornfield' WHERE id = 'cmq7gjq7c0008q77s5q9h3b7n';
+UPDATE "Video" SET "youtubeId" = 'gCKBLbCbXMw', title = 'How To Be A Good Buddhist | Dhamma Sermons' WHERE id = 'cmq7gjq7c0009q77sl4x6c8d2';
+UPDATE "Video" SET "youtubeId" = 'HJVUT0o9y8s', title = '10-Minute Guided Meditation for Beginners with a Buddhist Monk' WHERE id = 'cmq7gjq7c0010q77sw7y9e5f3';
+UPDATE "Video" SET "youtubeId" = 'A__DcoIZoN4', title = 'Dharma Talk - Awakening to a New Way of Being' WHERE id = 'cmq7gjq7c0011q77sr2t4g6h8';
 
 -- 7. Seed settings
 INSERT INTO "SiteSetting" (id, key, value) VALUES
